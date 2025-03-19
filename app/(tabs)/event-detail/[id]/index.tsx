@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/src/store/store';
 import { createComment } from '@/src/store/slices/homeSlice';
 import type { AppDispatch } from '@/src/store/store';
+import Payment from '@/app/(payment)';
 
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 const dummyConcertImage = 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
@@ -26,6 +27,19 @@ export default function EventDetailsScreen() {
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
   const event = featuredEvents?.find(event => event.id === id);
+
+  const [showPayment, setShowPayment] = useState(false); 
+  const [closedByUser, setClosedByUser] = useState(false); 
+
+  const showPaymentComponent = () => {
+    setShowPayment(true); 
+    setClosedByUser(false); 
+  };
+
+  const closePayment = () => {
+    setShowPayment(false); 
+    setClosedByUser(true); 
+  };
 
   const handleSubmitComment = async () => {
     if (!commentText.trim() || !id || isSubmitting) return;
@@ -88,7 +102,9 @@ export default function EventDetailsScreen() {
 
   return (
     <View style={styles.container}>
+      
       <ScrollView style={styles.scrollView}>
+        <View style={[showPayment && styles.dimmedContent]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
@@ -101,7 +117,10 @@ export default function EventDetailsScreen() {
                 <Text style={styles.badgeText}>3</Text>
               </View>
             </View>
-            <Image source={{ uri: dummyProfilePic }} style={styles.profilePic} />
+            <Image
+              source={{ uri: dummyProfilePic }}
+              style={styles.profilePic}
+            />
           </View>
         </View>
 
@@ -109,8 +128,14 @@ export default function EventDetailsScreen() {
         <View style={styles.eventCard}>
           <Image source={{ uri: event.attachment }} style={styles.eventImage} />
           <View style={styles.dateChip}>
-            <Text style={styles.dateText}>{new Date(event.date).getDate()}</Text>
-            <Text style={styles.monthText}>{new Date(event.date).toLocaleString('default', { month: 'short' })}</Text>
+            <Text style={styles.dateText}>
+              {new Date(event.date).getDate()}
+            </Text>
+            <Text style={styles.monthText}>
+              {new Date(event.date).toLocaleString('default', {
+                month: 'short',
+              })}
+            </Text>
           </View>
           <View style={styles.actionButtons}>
             <TouchableOpacity style={styles.actionButton}>
@@ -124,9 +149,9 @@ export default function EventDetailsScreen() {
         </View>
 
         {/* Buy Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.buyButton}
-          onPress={() => router.replace('/(tabs)/ticket')}
+          onPress={showPaymentComponent}
         >
           <Text style={styles.buyButtonText}>Buy it - PKR {event.price}</Text>
         </TouchableOpacity>
@@ -157,58 +182,92 @@ export default function EventDetailsScreen() {
         {/* Details Section */}
         <View style={styles.detailsCard}>
           <View style={styles.tabsContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tab, activeTab === 'details' && styles.activeTab]}
               onPress={() => setActiveTab('details')}
             >
-              <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>Details</Text>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'details' && styles.activeTabText,
+                ]}
+              >
+                Details
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tab, activeTab === 'comments' && styles.activeTab]}
               onPress={() => setActiveTab('comments')}
             >
-              <Text style={[styles.tabText, activeTab === 'comments' && styles.activeTabText]}>Comments</Text>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'comments' && styles.activeTabText,
+                ]}
+              >
+                Comments
+              </Text>
             </TouchableOpacity>
           </View>
 
           {activeTab === 'details' ? (
             <>
               <Text style={styles.description}>{event.description}</Text>
-          <Text style={styles.highlightsTitle}>Highlights</Text>
-          <View style={styles.highlightsList}>
+              <Text style={styles.highlightsTitle}>Highlights</Text>
+              <View style={styles.highlightsList}>
                 {event.highlights.map((highlight, index) => (
-                  <Text key={index} style={styles.highlightItem}>• {highlight}</Text>
+                  <Text key={index} style={styles.highlightItem}>
+                    • {highlight}
+                  </Text>
                 ))}
               </View>
             </>
           ) : (
             <View style={styles.commentsSection}>
-              <Text style={styles.commentsCount}>{event.comments.length} Comments</Text>
+              <Text style={styles.commentsCount}>
+                {event.comments.length} Comments
+              </Text>
               {event.comments.map((comment) => (
                 <View key={comment.id}>
                   <View style={styles.commentItem}>
-                    <Image source={{ uri: comment.user.profilePic }} style={styles.commentAvatar} />
+                    <Image
+                      source={{ uri: comment.user.profilePic }}
+                      style={styles.commentAvatar}
+                    />
                     <View style={styles.commentContent}>
                       <View style={styles.commentHeader}>
-                        <Text style={styles.commentAuthor}>{comment.user.name}</Text>
+                        <Text style={styles.commentAuthor}>
+                          {comment.user.name}
+                        </Text>
                         <Text style={styles.commentTime}>
                           {new Date(comment.createdAt).toLocaleDateString()}
                         </Text>
                       </View>
                       <Text style={styles.commentText}>{comment.content}</Text>
                       <View style={styles.commentActions}>
-                        <TouchableOpacity onPress={() => handleReply(comment.id)}>
-                          <Text style={[
-                            styles.actionText,
-                            replyingTo === comment.id && styles.activeActionText
-                          ]}>Reply</Text>
+                        <TouchableOpacity
+                          onPress={() => handleReply(comment.id)}
+                        >
+                          <Text
+                            style={[
+                              styles.actionText,
+                              replyingTo === comment.id &&
+                                styles.activeActionText,
+                            ]}
+                          >
+                            Reply
+                          </Text>
                         </TouchableOpacity>
                         {comment.replies?.length > 0 && (
                           <>
                             <Text style={styles.actionDot}>•</Text>
-                            <TouchableOpacity onPress={() => setShowAllReplies(!showAllReplies)}>
+                            <TouchableOpacity
+                              onPress={() => setShowAllReplies(!showAllReplies)}
+                            >
                               <Text style={styles.actionText}>
-                                {showAllReplies ? 'Hide Replies' : `View ${comment.replies.length} Replies`}
+                                {showAllReplies
+                                  ? 'Hide Replies'
+                                  : `View ${comment.replies.length} Replies`}
                               </Text>
                             </TouchableOpacity>
                           </>
@@ -226,9 +285,12 @@ export default function EventDetailsScreen() {
 
                   {replyingTo === comment.id && (
                     <View style={styles.replyInputContainer}>
-                      <Image source={{ uri: dummyProfilePic }} style={styles.replyAvatar} />
+                      <Image
+                        source={{ uri: dummyProfilePic }}
+                        style={styles.replyAvatar}
+                      />
                       <View style={styles.replyInput}>
-                        <TextInput 
+                        <TextInput
                           placeholder="Write a reply..."
                           placeholderTextColor="#999"
                           style={styles.replyTextInput}
@@ -236,12 +298,13 @@ export default function EventDetailsScreen() {
                           onChangeText={setReplyText}
                           editable={!isSubmittingReply}
                         />
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           onPress={() => handleSubmitReply(comment.id)}
                           disabled={!replyText.trim() || isSubmittingReply}
                           style={[
                             styles.replyButton,
-                            (!replyText.trim() || isSubmittingReply) && styles.replyButtonDisabled
+                            (!replyText.trim() || isSubmittingReply) &&
+                              styles.replyButtonDisabled,
                           ]}
                         >
                           {isSubmittingReply ? (
@@ -254,37 +317,52 @@ export default function EventDetailsScreen() {
                     </View>
                   )}
 
-                  {showAllReplies && comment.replies?.map((reply) => (
-                    <View key={reply.id} style={[styles.commentItem, styles.replyItem]}>
-                      <Image source={{ uri: reply.user.profilePic }} style={styles.commentAvatar} />
-                      <View style={styles.commentContent}>
-                        <View style={styles.commentHeader}>
-                          <Text style={styles.commentAuthor}>{reply.user.name}</Text>
-                          <Text style={styles.commentTime}>
-                            {new Date(reply.createdAt).toLocaleDateString()}
+                  {showAllReplies &&
+                    comment.replies?.map((reply) => (
+                      <View
+                        key={reply.id}
+                        style={[styles.commentItem, styles.replyItem]}
+                      >
+                        <Image
+                          source={{ uri: reply.user.profilePic }}
+                          style={styles.commentAvatar}
+                        />
+                        <View style={styles.commentContent}>
+                          <View style={styles.commentHeader}>
+                            <Text style={styles.commentAuthor}>
+                              {reply.user.name}
+                            </Text>
+                            <Text style={styles.commentTime}>
+                              {new Date(reply.createdAt).toLocaleDateString()}
+                            </Text>
+                          </View>
+                          <Text style={styles.commentText}>
+                            {reply.content}
                           </Text>
+                          <View style={styles.commentActions}>
+                            <TouchableOpacity>
+                              <Text style={styles.actionText}>Reply</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.actionDot}>•</Text>
+                            <TouchableOpacity>
+                              <Text style={styles.actionText}>0 Likes</Text>
+                            </TouchableOpacity>
+                          </View>
                         </View>
-                        <Text style={styles.commentText}>{reply.content}</Text>
-                        <View style={styles.commentActions}>
-                          <TouchableOpacity>
-                            <Text style={styles.actionText}>Reply</Text>
-                          </TouchableOpacity>
-                          <Text style={styles.actionDot}>•</Text>
-                          <TouchableOpacity>
-                            <Text style={styles.actionText}>0 Likes</Text>
-                          </TouchableOpacity>
-                        </View>
+                        <TouchableOpacity style={styles.likeButton}>
+                          <Ionicons
+                            name="heart-outline"
+                            size={20}
+                            color="white"
+                          />
+                        </TouchableOpacity>
                       </View>
-                      <TouchableOpacity style={styles.likeButton}>
-                        <Ionicons name="heart-outline" size={20} color="white" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
+                    ))}
                 </View>
               ))}
 
               <View style={styles.commentInput}>
-                <TextInput 
+                <TextInput
                   placeholder="Leave a Comment.."
                   placeholderTextColor="#999"
                   style={styles.commentTextInput}
@@ -299,12 +377,13 @@ export default function EventDetailsScreen() {
                   <TouchableOpacity>
                     <Ionicons name="happy-outline" size={24} color="#999" />
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={handleSubmitComment}
                     disabled={!commentText.trim() || isSubmitting}
                     style={[
                       styles.sendButton,
-                      (!commentText.trim() || isSubmitting) && styles.sendButtonDisabled
+                      (!commentText.trim() || isSubmitting) &&
+                        styles.sendButtonDisabled,
                     ]}
                   >
                     {isSubmitting ? (
@@ -315,10 +394,12 @@ export default function EventDetailsScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-          </View>
+            </View>
           )}
         </View>
+        </View>
       </ScrollView>
+      
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -339,6 +420,7 @@ export default function EventDetailsScreen() {
           <Text style={styles.navText}>Settings</Text>
         </TouchableOpacity>
       </View>
+      {showPayment && !closedByUser && <Payment onClose={closePayment} />}
     </View>
   );
 }
@@ -350,7 +432,10 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    
+  },
+  dimmedContent: {
+    opacity: 0.2,
+    pointerEvents: 'none',
   },
   header: {
     flexDirection: 'row',
@@ -396,7 +481,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   eventImage: {
-    
     width: '100%',
     height: 160,
     borderRadius: 16,
