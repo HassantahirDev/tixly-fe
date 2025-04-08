@@ -14,7 +14,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/src/store/store';
 import { useLocalSearchParams } from 'expo-router';
 import { Formik } from 'formik';
-// import * as Yup from 'yup';
 import * as ImagePicker from 'expo-image-picker';
 const thankYouImage = require('../../src/assets/images/thankYou.png');
 
@@ -28,9 +27,6 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [showAccountDetailsForm, setShowAccountDetailsForm] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  // const [easyPaisaAccountNumber, setEasyPaisaAccountNumber] = useState('');
-  // const [jazzCashAccountNumber, setJazzCashAccountNumber] = useState('');
-  // const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [uploadStatus, setUploadStatus] = useState<'success' | 'failed' | null>(
     null
   );
@@ -87,7 +83,6 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
         bankAccountNumber: '239482439487878',
         bankName: 'Meezan Bank Limited',
       }}
-      // validationSchema={PaymentSchema}
       onSubmit={(values) => {
         console.log('Form Data:', values);
         setShowAccountDetailsForm(false);
@@ -95,15 +90,9 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
       }}
     >
       {({
-        handleChange,
-        handleBlur,
         handleSubmit,
         values,
-        errors,
-        touched,
         setFieldValue,
-        validateForm,
-        setTouched,
       }) => {
         return (
           <View style={styles.overlay}>
@@ -115,6 +104,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                   showAccountDetailsForm) && (
                   <TouchableOpacity
                     onPress={() => {
+                      setUploadStatus(null); 
                       if (showVerification) {
                         setShowVerification(false);
                         setShowAccountDetailsForm(true);
@@ -246,15 +236,8 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                               style={styles.inputBox}
                               placeholder="Enter Account Name"
                               placeholderTextColor="#949494"
-                              // onChangeText={handleChange('accountName')}
-                              // onBlur={handleBlur('accountName')}
                               value={values.accountName}
                             />
-                            {/* {touched.accountName && errors.accountName && (
-                              <Text style={styles.errorText}>
-                                {errors.accountName}
-                              </Text>
-                            )} */}
                           </View>
                           <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>
@@ -264,26 +247,12 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                               style={styles.inputBox}
                               placeholder="Enter Account Number"
                               placeholderTextColor="#949494"
-                              // keyboardType="numeric"
-                              // maxLength={11}
-                              // onChangeText={(text) => {
-                              //   const sanitizedText = text
-                              //     .replace(/[^0-9]/g, '')
-                              //     .slice(0, 11);
-                              //   handleChange('accountNumber')(sanitizedText);
-                              // }}
-                              // onBlur={handleBlur('accountNumber')}
                               value={
                                 values.selectedMethod === 'EasyPaisa'
                                   ? values.easyPaisaAccountNumber
                                   : values.jazzCashAccountNumber
                               }
                             />
-                            {/* {touched.accountNumber && errors.accountNumber && (
-                              <Text style={styles.errorText}>
-                                {errors.accountNumber}
-                              </Text>
-                            )} */}
                           </View>
                           <view>
                             <Text style={styles.paymentInstructions}>
@@ -298,17 +267,6 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                           onPress={async () => {
                             setShowAccountDetailsForm(false);
                             setShowVerification(true);
-                            // const errors = await validateForm();
-
-                            // if (Object.keys(errors).length === 0) {
-                            //   setShowAccountDetailsForm(false);
-                            //   setShowVerification(true);
-                            // } else {
-                            //   setTouched({
-                            //     accountName: true,
-                            //     accountNumber: true,
-                            //   });
-                            // }
                           }}
                         >
                           <Text style={styles.buyButtonText}>Verify</Text>
@@ -344,13 +302,6 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                             placeholder="Enter Account Number"
                             placeholderTextColor="#949494"
                             keyboardType="numeric"
-                            // maxLength={15}
-                            // onChangeText={(text) => {
-                            //   const sanitizedText = text
-                            //     .replace(/[^0-9]/g, '')
-                            //     .slice(0, 15);
-                            //   setBankAccountNumber(sanitizedText);
-                            // }}
                             value={values.bankAccountNumber}
                           />
                         </View>
