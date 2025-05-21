@@ -7,20 +7,17 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Header from '../../../src/components/Header';
 import { Ionicons } from '@expo/vector-icons';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { LinearGradient } from 'expo-linear-gradient';
-import { RootState } from '@/src/store/store';
-import { useSelector } from 'react-redux';
 
 const Jiguy = require('../../../src/assets/images/jiguy.svg');
 const event = require('../../../src/assets/images/event.png');
 
-const dummyAtifImage =
-  'https://s3-alpha-sig.figma.com/img/7195/35ce/20f435aa2aaf485222099fce2f34d806?Expires=1745193600&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=Z7vsJ4RSbBm5X2gDZ4JDc8QI6boZjGG2GLzr0dgYVU9IF7fillNg41LCNgh1p5sxA1-rvDBeWVUN4-D5VlDr1dA0R-kpFT54nribowJeQTtXob1dtnQxN2lck5~954vrVGDzBdc4Ks7ynFIbxirPzvCUn1Px0fpMgYfB-6aFKjoY7V4eYn~iCQbXsCJaYYGJe9wNErsk1E0Q3oq8QOtKi4ltwQglcdg4QKz5LGnOuz4FTw8CqQHHKoucvTVU2G3UkxoJkMSzkjMaPbMjQl7LuncyGLU3fhB6nHlFDuMGScGFPL~ZLWY~5SNqvn3rjdzZjXUzUm8gcDV-0fqJBmB4AA__';
+const dummyAtifImage = require('../../../src/assets/images/organzerTop.png');
 
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
@@ -85,10 +82,43 @@ const categories = [
   },
 ];
 
+const topEvents = [
+  {
+    id: '1',
+    image: dummyAtifImage,
+    title: 'Tixly concert - Atif Aslam',
+    location: 'Bahria Town, Lahore',
+    time: '08:00 PM - 10:00 PM Apr 08, 2025',
+    price: 'PKR 500',
+  },
+  {
+    id: '2',
+    image: dummyAtifImage,
+    title: 'Live Music - Ali Zafar',
+    location: 'DHA Phase 6, Lahore',
+    time: '07:00 PM - 09:00 PM Apr 10, 2025',
+    price: 'PKR 750',
+  },
+  {
+    id: '3',
+    image: dummyAtifImage,
+    title: 'Tixly concert - Atif Aslam',
+    location: 'Bahria Town, Lahore',
+    time: '08:00 PM - 10:00 PM Apr 08, 2025',
+    price: 'PKR 500',
+  },
+  {
+    id: '4',
+    image: dummyAtifImage,
+    title: 'Live Music - Ali Zafar',
+    location: 'DHA Phase 6, Lahore',
+    time: '07:00 PM - 09:00 PM Apr 10, 2025',
+    price: 'PKR 750',
+  },
+];
+
 const organizerHome: React.FC = () => {
   const router = useRouter();
-  // const { featuredEvents, featuredEventsLoading, featuredEventsError } =
-  //   useSelector((state: RootState) => state.home);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -138,7 +168,10 @@ const organizerHome: React.FC = () => {
                 Ease!
               </Text>
             </View>
-            <TouchableOpacity style={styles.eventButton}>
+            <TouchableOpacity
+              style={styles.eventButton}
+              onPress={() => router.push('/organizer/create-event')}
+            >
               <Text style={styles.eventButtonText}>Create Event</Text>
             </TouchableOpacity>
           </LinearGradient>
@@ -239,31 +272,33 @@ const organizerHome: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.topEventCard}>
-            <Image
-              source={{ uri: dummyAtifImage }}
-              style={styles.topEventImage}
-            />
-            
-            <View style={styles.topEventDetails}>
-              <Text style={styles.topEventTitle}>
-                Tixly concert - Atif Aslam
-              </Text>
-              <View style={styles.locationContainer}>
-                <Ionicons name="location-outline" size={16} color="#E1E1E1" />
-                <Text style={styles.locationText}>Bahria Town, Lahore</Text>
+          {topEvents.map((event) => (
+            <TouchableOpacity key={event.id} style={styles.topEventCard}>
+              <View style={styles.imageTitleRow}>
+                <Image source={event.image} style={styles.topEventImage} />
+                <Text style={styles.topEventTitle}>{event.title}</Text>
               </View>
-              <Text style={styles.timeText}>
-                08:00 PM - 10:00 PM Apr 08, 2025
-              </Text>
-            </View>
-            <View style={styles.topEventPrice}>
-              <Text style={styles.priceText}>PKR 500</Text>
-            </View>
-            <TouchableOpacity style={styles.topEventFavorite}>
-              <Ionicons name="heart-outline" size={24} color="white" />
+
+              <View style={styles.topEventDetails}>
+                <View style={styles.locationcardContainer}>
+                  <Ionicons name="location-outline" size={16} color="#949494" />
+                  <Text style={styles.locationText}>{event.location}</Text>
+                </View>
+                <View style={styles.timePriceRow}>
+                  <View style={styles.locationcardContainer}>
+                    <FontAwesome6 name="clock" size={12} color="#949494" />
+                    <Text style={styles.locationText}>{event.time}</Text>
+                  </View>
+                  <View style={styles.topEventPrice}>
+                    <Text style={styles.priceText}>{event.price}</Text>
+                  </View>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.topEventFavorite}>
+                <Ionicons name="heart-outline" size={24} color="white" />
+              </TouchableOpacity>
             </TouchableOpacity>
-          </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
     </View>
@@ -481,8 +516,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   locationText: {
-    color: '#E1E1E1',
-    marginLeft: 5,
+    color: '#949494',
+    marginLeft: 8,
     fontSize: 12,
     fontFamily: 'Urbanist_400Regular',
   },
@@ -499,9 +534,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist_400Regular',
   },
   priceText: {
-    color: 'white',
-    fontSize: 20,
-    fontFamily: 'Urbanist_400Regular',
+    color: '#BA0507',
+    fontSize: 26,
+    fontFamily: 'Urbanist_700Bold',
+    letterSpacing: 2,
+    lineHeight: 16 * 1.2,
+    marginTop: -6,
   },
   favoriteButton: {
     position: 'absolute',
@@ -511,9 +549,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 8,
   },
-
   topEventsSection: {
-    marginBottom: 80,
+    // marginBottom: 80,
+  },
+  lastEventCard: {
+    marginBottom: 0,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -524,52 +564,67 @@ const styles = StyleSheet.create({
   seeAllText: {
     color: '#E1E1E1',
     fontSize: 14,
-    fontFamily: 'Urbanist_600SemiBold',
+    fontFamily: 'Urbanist_400Regular',
+    letterSpacing: 1,
   },
   topEventCard: {
     padding: 12,
-    flexDirection: 'row',
+    flexDirection: 'column',
     backgroundColor: '#1E1E1E',
-    margin: 20,
+    marginTop: 20,
     borderRadius: 15,
     overflow: 'hidden',
+  },
+  imageTitleRow: {
+    flexDirection: 'row',
   },
   topEventImage: {
     width: 80,
     borderRadius: 15,
     height: 80,
-  },
-  topEventDetails: {
-    flex: 1,
-    padding: 10,
+    marginRight: 10,
   },
   topEventTitle: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    paddingTop: 6,
+    color: '#E1E1E1',
+    fontSize: 18,
     letterSpacing: 2,
-    marginBottom: 5,
     fontFamily: 'Urbanist_600SemiBold',
+    maxWidth: 165,
+    lineHeight: 26,
+    flex: 1,
+  },
+  topEventDetails: {
+    paddingVertical: 13,
+  },
+  locationcardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timePriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+    marginLeft: 2,
   },
   timeText: {
     color: '#E1E1E1',
     fontSize: 12,
-    marginTop: 5,
     fontFamily: 'Urbanist_400Regular',
   },
   topEventPrice: {
-    padding: 10,
-    justifyContent: 'center',
+    paddingHorizontal: 10,
   },
+
   topEventFavorite: {
     position: 'absolute',
     top: 10,
     right: 10,
   },
   sectionTwoTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
     color: 'white',
-    fontFamily: 'Urbanist_600SemiBold',
+    fontFamily: 'Urbanist_400Regular',
   },
 });
