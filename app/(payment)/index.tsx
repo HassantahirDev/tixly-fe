@@ -104,7 +104,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                   showAccountDetailsForm) && (
                   <TouchableOpacity
                     onPress={() => {
-                      setUploadStatus(null); 
+                      setUploadStatus(null);
                       if (showVerification) {
                         setShowVerification(false);
                         setShowAccountDetailsForm(true);
@@ -225,56 +225,52 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
               {/* Payment Details Form */}
               {showAccountDetailsForm && (
                 <View>
-                  <Text>
-                    {values.selectedMethod === 'Jazzcash' ||
-                    values.selectedMethod === 'EasyPaisa' ? (
-                      <View>
-                        <View style={styles.formContainer}>
-                          <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Account Name</Text>
-                            <TextInput
-                              style={styles.inputBox}
-                              placeholder="Enter Account Name"
-                              placeholderTextColor="#949494"
-                              value={values.accountName}
-                            />
-                          </View>
-                          <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>
-                              Account Number
-                            </Text>
-                            <TextInput
-                              style={styles.inputBox}
-                              placeholder="Enter Account Number"
-                              placeholderTextColor="#949494"
-                              value={
-                                values.selectedMethod === 'EasyPaisa'
-                                  ? values.easyPaisaAccountNumber
-                                  : values.jazzCashAccountNumber
-                              }
-                            />
-                          </View>
-                          <view>
-                            <Text style={styles.paymentInstructions}>
-                              Pay through {values.selectedMethod} in the given
-                              account number & upload screenshot for
-                              verification.
-                            </Text>
-                          </view>
-                        </View>
-                        <TouchableOpacity
-                          style={styles.buyButton}
-                          onPress={async () => {
-                            setShowAccountDetailsForm(false);
-                            setShowVerification(true);
-                          }}
-                        >
-                          <Text style={styles.buyButtonText}>Verify</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
+                  {values.selectedMethod === 'Jazzcash' ||
+                  values.selectedMethod === 'EasyPaisa' ? (
+                    <>
                       <View style={styles.formContainer}>
-                        {/* Bank name */}
+                        <View style={styles.inputContainer}>
+                          <Text style={styles.inputLabel}>Account Name</Text>
+                          <TextInput
+                            style={styles.inputBox}
+                            placeholder="Enter Account Name"
+                            placeholderTextColor="#949494"
+                            value={values.accountName}
+                          />
+                        </View>
+                        <View style={styles.inputContainer}>
+                          <Text style={styles.inputLabel}>Account Number</Text>
+                          <TextInput
+                            style={styles.inputBox}
+                            placeholder="Enter Account Number"
+                            placeholderTextColor="#949494"
+                            value={
+                              values.selectedMethod === 'EasyPaisa'
+                                ? values.easyPaisaAccountNumber
+                                : values.jazzCashAccountNumber
+                            }
+                          />
+                        </View>
+                        <View>
+                          <Text style={styles.paymentInstructions}>
+                            Pay through {values.selectedMethod} in the given
+                            account number & upload screenshot for verification.
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.buyButton}
+                        onPress={() => {
+                          setShowAccountDetailsForm(false);
+                          setShowVerification(true);
+                        }}
+                      >
+                        <Text style={styles.buyButtonText}>Verify</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.formContainer}>
                         <View style={styles.inputContainer}>
                           <Text style={styles.inputLabel}>Bank Name</Text>
                           <TextInput
@@ -284,8 +280,6 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                             value={values.bankName}
                           />
                         </View>
-
-                        {/* Second Input */}
                         <View style={styles.inputContainer}>
                           <Text style={styles.inputLabel}>Account Name</Text>
                           <TextInput
@@ -305,23 +299,24 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                             value={values.bankAccountNumber}
                           />
                         </View>
-                        <view>
+                        <View>
                           <Text style={styles.paymentInstructions}>
                             lorem Ipsum, lorem Ipsum, lorem Ipsum, lorem Ipsum,
                             lorem Ipsum, lorem Ipsum
                           </Text>
-                        </view>
-                        <TouchableOpacity
-                          style={styles.buyButton}
-                          onPress={async () => {
-                            setShowAccountDetailsForm(false);
-                            setShowVerification(true);}}
-                        >
-                          <Text style={styles.buyButtonText}>Verify</Text>
-                        </TouchableOpacity>
+                        </View>
                       </View>
-                    )}
-                  </Text>
+                      <TouchableOpacity
+                        style={styles.buyButton}
+                        onPress={() => {
+                          setShowAccountDetailsForm(false);
+                          setShowVerification(true);
+                        }}
+                      >
+                        <Text style={styles.buyButtonText}>Verify</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               )}
 
