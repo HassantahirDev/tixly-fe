@@ -106,11 +106,19 @@ export default function LoginScreen() {
         // Test Case 5: API call and response handling
         const result = await dispatch(login({ email, password, role })).unwrap();
         
-        if (result) {
-          // Store token in AsyncStorage (already done in auth slice)
+        if (result?.success) {
+          console.log('result12321', result);
+
+          const role = result?.data?.role;
+
           showToast('Login successful! Redirecting...', 'success');
+
           setTimeout(() => {
-            router.replace('/(tabs)');
+            if (role === 'ORGANIZER') {
+              router.replace('/organizer/home');
+            } else {
+              router.replace('/(tabs)');
+            }
           }, 1000);
         }
       } catch (loginError: any) {

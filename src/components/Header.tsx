@@ -1,29 +1,41 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
 export default function Header() {
+  const router = useRouter();
+
+  const handleNotificationClick = () => {
+    router.push('/(tabs)/settings/notification');
+  };
+
+  const handleProfileClick = () => {
+    router.push('/(tabs)/settings/profile');
+  };
+
   return (
     <View style={styles.header}>
       <Text style={styles.logo}>TiXLY</Text>
       <View style={styles.headerRight}>
         <View style={styles.notificationBadge}>
-          <Ionicons name="notifications-outline" size={24} color="white" />
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View>
+          <TouchableOpacity onPress={handleNotificationClick}>
+            <Ionicons name="notifications-outline" size={24} color="white" />
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>3</Text>
+            </View>
+          </TouchableOpacity>
         </View>
-        <Image source={{ uri: dummyProfilePic }} style={styles.profilePic} />
+        <TouchableOpacity onPress={handleProfileClick}>
+          <Image source={{ uri: dummyProfilePic }} style={styles.profilePic} />
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {},

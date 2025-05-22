@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,9 +16,12 @@ import { RootState } from '@/src/store/store';
 import { createComment } from '@/src/store/slices/homeSlice';
 import type { AppDispatch } from '@/src/store/store';
 import Payment from '@/app/(payment)';
+import Header from '@/src/components/Header';
+import RoleNavigation from '@/src/components/Navigation';
 
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
-const dummyConcertImage = 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
+const dummyConcertImage =
+  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
 const dummyCommentPic = 'https://randomuser.me/api/portraits/women/1.jpg';
 
 export default function EventDetailsScreen() {
@@ -26,19 +37,19 @@ export default function EventDetailsScreen() {
   const [replyText, setReplyText] = useState('');
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
-  const event = featuredEvents?.find(event => event.id === id);
+  const event = featuredEvents?.find((event) => event.id === id);
 
-  const [showPayment, setShowPayment] = useState(false); 
-  const [closedByUser, setClosedByUser] = useState(false); 
+  const [showPayment, setShowPayment] = useState(false);
+  const [closedByUser, setClosedByUser] = useState(false);
 
   const showPaymentComponent = () => {
-    setShowPayment(true); 
-    setClosedByUser(false); 
+    setShowPayment(true);
+    setClosedByUser(false);
   };
 
   const closePayment = () => {
-    setShowPayment(false); 
-    setClosedByUser(true); 
+    setShowPayment(false);
+    setClosedByUser(true);
   };
 
   const handleSubmitComment = async () => {
@@ -46,7 +57,9 @@ export default function EventDetailsScreen() {
 
     setIsSubmitting(true);
     try {
-      await dispatch(createComment({ content: commentText, eventId: id as string })).unwrap();
+      await dispatch(
+        createComment({ content: commentText, eventId: id as string })
+      ).unwrap();
       setCommentText('');
     } catch (error) {
       console.error('Failed to submit comment:', error);
@@ -77,24 +90,29 @@ export default function EventDetailsScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('default', { 
+    return new Date(dateString).toLocaleDateString('default', {
       year: 'numeric',
       month: 'short',
-      day: '2-digit'
+      day: '2-digit',
     });
   };
 
   const formatTime = (timeString: string) => {
-    return new Date(timeString).toLocaleString('default', { 
+    return new Date(timeString).toLocaleString('default', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     });
   };
 
   if (!event) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
         <ActivityIndicator color="#FF4B55" size="large" />
       </View>
     );
@@ -102,324 +120,306 @@ export default function EventDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      
       <ScrollView style={styles.scrollView}>
         <View style={[showPayment && styles.dimmedContent]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <View style={styles.headerRight}>
-            <View style={styles.notificationBadge}>
-              <Ionicons name="notifications-outline" size={24} color="white" />
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>3</Text>
-              </View>
-            </View>
+          {/* Header */}
+          <Header />
+
+          {/* Event Card */}
+          <View style={styles.eventCard}>
             <Image
-              source={{ uri: dummyProfilePic }}
-              style={styles.profilePic}
+              source={{ uri: event.attachment }}
+              style={styles.eventImage}
             />
+            <View style={styles.dateChip}>
+              <Text style={styles.dateText}>
+                {new Date(event.date).getDate()}
+              </Text>
+              <Text style={styles.monthText}>
+                {new Date(event.date).toLocaleString('default', {
+                  month: 'short',
+                })}
+              </Text>
+            </View>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="heart-outline" size={24} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="share-social-outline" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.eventTitle}>{event.title}</Text>
           </View>
-        </View>
 
-        {/* Event Card */}
-        <View style={styles.eventCard}>
-          <Image source={{ uri: event.attachment }} style={styles.eventImage} />
-          <View style={styles.dateChip}>
-            <Text style={styles.dateText}>
-              {new Date(event.date).getDate()}
-            </Text>
-            <Text style={styles.monthText}>
-              {new Date(event.date).toLocaleString('default', {
-                month: 'short',
-              })}
-            </Text>
-          </View>
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="heart-outline" size={24} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="share-social-outline" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.eventTitle}>{event.title}</Text>
-        </View>
+          {/* Buy Button */}
+          <TouchableOpacity
+            style={styles.buyButton}
+            onPress={showPaymentComponent}
+          >
+            <Text style={styles.buyButtonText}>Buy it - PKR {event.price}</Text>
+          </TouchableOpacity>
 
-        {/* Buy Button */}
-        <TouchableOpacity
-          style={styles.buyButton}
-          onPress={showPaymentComponent}
-        >
-          <Text style={styles.buyButtonText}>Buy it - PKR {event.price}</Text>
-        </TouchableOpacity>
+          {/* General Info */}
+          <View style={styles.infoCard}>
+            <Text style={styles.sectionTitle}>General Info</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Location:</Text>
+              <Text style={styles.infoValue}>{event.location}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Duration:</Text>
+              <Text style={styles.infoValue}>
+                {formatTime(event.startTime)} - {formatTime(event.endTime)}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Date:</Text>
+              <Text style={styles.infoValue}>{formatDate(event.date)}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Age:</Text>
+              <Text style={styles.infoValue}>{event.ageLimit} years +</Text>
+            </View>
+          </View>
 
-        {/* General Info */}
-        <View style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>General Info</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Location:</Text>
-            <Text style={styles.infoValue}>{event.location}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Duration:</Text>
-            <Text style={styles.infoValue}>
-              {formatTime(event.startTime)} - {formatTime(event.endTime)}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Date:</Text>
-            <Text style={styles.infoValue}>{formatDate(event.date)}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Age:</Text>
-            <Text style={styles.infoValue}>{event.ageLimit} years +</Text>
-          </View>
-        </View>
-
-        {/* Details Section */}
-        <View style={styles.detailsCard}>
-          <View style={styles.tabsContainer}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'details' && styles.activeTab]}
-              onPress={() => setActiveTab('details')}
-            >
-              <Text
+          {/* Details Section */}
+          <View style={styles.detailsCard}>
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity
                 style={[
-                  styles.tabText,
-                  activeTab === 'details' && styles.activeTabText,
+                  styles.tab,
+                  activeTab === 'details' && styles.activeTab,
                 ]}
+                onPress={() => setActiveTab('details')}
               >
-                Details
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'comments' && styles.activeTab]}
-              onPress={() => setActiveTab('comments')}
-            >
-              <Text
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'details' && styles.activeTabText,
+                  ]}
+                >
+                  Details
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[
-                  styles.tabText,
-                  activeTab === 'comments' && styles.activeTabText,
+                  styles.tab,
+                  activeTab === 'comments' && styles.activeTab,
                 ]}
+                onPress={() => setActiveTab('comments')}
               >
-                Comments
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'comments' && styles.activeTabText,
+                  ]}
+                >
+                  Comments
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          {activeTab === 'details' ? (
-            <>
-              <Text style={styles.description}>{event.description}</Text>
-              <Text style={styles.highlightsTitle}>Highlights</Text>
-              <View style={styles.highlightsList}>
-                {event.highlights.map((highlight, index) => (
-                  <Text key={index} style={styles.highlightItem}>
-                    • {highlight}
-                  </Text>
-                ))}
-              </View>
-            </>
-          ) : (
-            <View style={styles.commentsSection}>
-              <Text style={styles.commentsCount}>
-                {event.comments.length} Comments
-              </Text>
-              {event.comments.map((comment) => (
-                <View key={comment.id}>
-                  <View style={styles.commentItem}>
-                    <Image
-                      source={{ uri: comment.user.profilePic }}
-                      style={styles.commentAvatar}
-                    />
-                    <View style={styles.commentContent}>
-                      <View style={styles.commentHeader}>
-                        <Text style={styles.commentAuthor}>
-                          {comment.user.name}
+            {activeTab === 'details' ? (
+              <>
+                <Text style={styles.description}>{event.description}</Text>
+                <Text style={styles.highlightsTitle}>Highlights</Text>
+                <View style={styles.highlightsList}>
+                  {event.highlights.map((highlight, index) => (
+                    <Text key={index} style={styles.highlightItem}>
+                      • {highlight}
+                    </Text>
+                  ))}
+                </View>
+              </>
+            ) : (
+              <View style={styles.commentsSection}>
+                <Text style={styles.commentsCount}>
+                  {event.comments.length} Comments
+                </Text>
+                {event.comments.map((comment) => (
+                  <View key={comment.id}>
+                    <View style={styles.commentItem}>
+                      <Image
+                        source={{ uri: comment.user.profilePic }}
+                        style={styles.commentAvatar}
+                      />
+                      <View style={styles.commentContent}>
+                        <View style={styles.commentHeader}>
+                          <Text style={styles.commentAuthor}>
+                            {comment.user.name}
+                          </Text>
+                          <Text style={styles.commentTime}>
+                            {new Date(comment.createdAt).toLocaleDateString()}
+                          </Text>
+                        </View>
+                        <Text style={styles.commentText}>
+                          {comment.content}
                         </Text>
-                        <Text style={styles.commentTime}>
-                          {new Date(comment.createdAt).toLocaleDateString()}
-                        </Text>
+                        <View style={styles.commentActions}>
+                          <TouchableOpacity
+                            onPress={() => handleReply(comment.id)}
+                          >
+                            <Text
+                              style={[
+                                styles.actionText,
+                                replyingTo === comment.id &&
+                                  styles.activeActionText,
+                              ]}
+                            >
+                              Reply
+                            </Text>
+                          </TouchableOpacity>
+                          {comment.replies?.length > 0 && (
+                            <>
+                              <Text style={styles.actionDot}>•</Text>
+                              <TouchableOpacity
+                                onPress={() =>
+                                  setShowAllReplies(!showAllReplies)
+                                }
+                              >
+                                <Text style={styles.actionText}>
+                                  {showAllReplies
+                                    ? 'Hide Replies'
+                                    : `View ${comment.replies.length} Replies`}
+                                </Text>
+                              </TouchableOpacity>
+                            </>
+                          )}
+                          <Text style={styles.actionDot}>•</Text>
+                          <TouchableOpacity>
+                            <Text style={styles.actionText}>0 Likes</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                      <Text style={styles.commentText}>{comment.content}</Text>
-                      <View style={styles.commentActions}>
-                        <TouchableOpacity
-                          onPress={() => handleReply(comment.id)}
-                        >
-                          <Text
+                      <TouchableOpacity style={styles.likeButton}>
+                        <Ionicons
+                          name="heart-outline"
+                          size={20}
+                          color="white"
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    {replyingTo === comment.id && (
+                      <View style={styles.replyInputContainer}>
+                        <Image
+                          source={{ uri: dummyProfilePic }}
+                          style={styles.replyAvatar}
+                        />
+                        <View style={styles.replyInput}>
+                          <TextInput
+                            placeholder="Write a reply..."
+                            placeholderTextColor="#999"
+                            style={styles.replyTextInput}
+                            value={replyText}
+                            onChangeText={setReplyText}
+                            editable={!isSubmittingReply}
+                          />
+                          <TouchableOpacity
+                            onPress={() => handleSubmitReply(comment.id)}
+                            disabled={!replyText.trim() || isSubmittingReply}
                             style={[
-                              styles.actionText,
-                              replyingTo === comment.id &&
-                                styles.activeActionText,
+                              styles.replyButton,
+                              (!replyText.trim() || isSubmittingReply) &&
+                                styles.replyButtonDisabled,
                             ]}
                           >
-                            Reply
-                          </Text>
-                        </TouchableOpacity>
-                        {comment.replies?.length > 0 && (
-                          <>
-                            <Text style={styles.actionDot}>•</Text>
-                            <TouchableOpacity
-                              onPress={() => setShowAllReplies(!showAllReplies)}
-                            >
-                              <Text style={styles.actionText}>
-                                {showAllReplies
-                                  ? 'Hide Replies'
-                                  : `View ${comment.replies.length} Replies`}
-                              </Text>
-                            </TouchableOpacity>
-                          </>
-                        )}
-                        <Text style={styles.actionDot}>•</Text>
-                        <TouchableOpacity>
-                          <Text style={styles.actionText}>0 Likes</Text>
-                        </TouchableOpacity>
+                            {isSubmittingReply ? (
+                              <ActivityIndicator size="small" color="white" />
+                            ) : (
+                              <Ionicons name="send" size={20} color="white" />
+                            )}
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                    </View>
-                    <TouchableOpacity style={styles.likeButton}>
-                      <Ionicons name="heart-outline" size={20} color="white" />
+                    )}
+
+                    {showAllReplies &&
+                      comment.replies?.map((reply) => (
+                        <View
+                          key={reply.id}
+                          style={[styles.commentItem, styles.replyItem]}
+                        >
+                          <Image
+                            source={{ uri: reply.user.profilePic }}
+                            style={styles.commentAvatar}
+                          />
+                          <View style={styles.commentContent}>
+                            <View style={styles.commentHeader}>
+                              <Text style={styles.commentAuthor}>
+                                {reply.user.name}
+                              </Text>
+                              <Text style={styles.commentTime}>
+                                {new Date(reply.createdAt).toLocaleDateString()}
+                              </Text>
+                            </View>
+                            <Text style={styles.commentText}>
+                              {reply.content}
+                            </Text>
+                            <View style={styles.commentActions}>
+                              <TouchableOpacity>
+                                <Text style={styles.actionText}>Reply</Text>
+                              </TouchableOpacity>
+                              <Text style={styles.actionDot}>•</Text>
+                              <TouchableOpacity>
+                                <Text style={styles.actionText}>0 Likes</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                          <TouchableOpacity style={styles.likeButton}>
+                            <Ionicons
+                              name="heart-outline"
+                              size={20}
+                              color="white"
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                  </View>
+                ))}
+
+                <View style={styles.commentInput}>
+                  <TextInput
+                    placeholder="Leave a Comment.."
+                    placeholderTextColor="#999"
+                    style={styles.commentTextInput}
+                    value={commentText}
+                    onChangeText={setCommentText}
+                    editable={!isSubmitting}
+                  />
+                  <View style={styles.commentInputActions}>
+                    <TouchableOpacity>
+                      <Ionicons name="at" size={24} color="#999" />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                      <Ionicons name="happy-outline" size={24} color="#999" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleSubmitComment}
+                      disabled={!commentText.trim() || isSubmitting}
+                      style={[
+                        styles.sendButton,
+                        (!commentText.trim() || isSubmitting) &&
+                          styles.sendButtonDisabled,
+                      ]}
+                    >
+                      {isSubmitting ? (
+                        <ActivityIndicator size="small" color="white" />
+                      ) : (
+                        <Ionicons name="send" size={24} color="white" />
+                      )}
                     </TouchableOpacity>
                   </View>
-
-                  {replyingTo === comment.id && (
-                    <View style={styles.replyInputContainer}>
-                      <Image
-                        source={{ uri: dummyProfilePic }}
-                        style={styles.replyAvatar}
-                      />
-                      <View style={styles.replyInput}>
-                        <TextInput
-                          placeholder="Write a reply..."
-                          placeholderTextColor="#999"
-                          style={styles.replyTextInput}
-                          value={replyText}
-                          onChangeText={setReplyText}
-                          editable={!isSubmittingReply}
-                        />
-                        <TouchableOpacity
-                          onPress={() => handleSubmitReply(comment.id)}
-                          disabled={!replyText.trim() || isSubmittingReply}
-                          style={[
-                            styles.replyButton,
-                            (!replyText.trim() || isSubmittingReply) &&
-                              styles.replyButtonDisabled,
-                          ]}
-                        >
-                          {isSubmittingReply ? (
-                            <ActivityIndicator size="small" color="white" />
-                          ) : (
-                            <Ionicons name="send" size={20} color="white" />
-                          )}
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
-
-                  {showAllReplies &&
-                    comment.replies?.map((reply) => (
-                      <View
-                        key={reply.id}
-                        style={[styles.commentItem, styles.replyItem]}
-                      >
-                        <Image
-                          source={{ uri: reply.user.profilePic }}
-                          style={styles.commentAvatar}
-                        />
-                        <View style={styles.commentContent}>
-                          <View style={styles.commentHeader}>
-                            <Text style={styles.commentAuthor}>
-                              {reply.user.name}
-                            </Text>
-                            <Text style={styles.commentTime}>
-                              {new Date(reply.createdAt).toLocaleDateString()}
-                            </Text>
-                          </View>
-                          <Text style={styles.commentText}>
-                            {reply.content}
-                          </Text>
-                          <View style={styles.commentActions}>
-                            <TouchableOpacity>
-                              <Text style={styles.actionText}>Reply</Text>
-                            </TouchableOpacity>
-                            <Text style={styles.actionDot}>•</Text>
-                            <TouchableOpacity>
-                              <Text style={styles.actionText}>0 Likes</Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                        <TouchableOpacity style={styles.likeButton}>
-                          <Ionicons
-                            name="heart-outline"
-                            size={20}
-                            color="white"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                </View>
-              ))}
-
-              <View style={styles.commentInput}>
-                <TextInput
-                  placeholder="Leave a Comment.."
-                  placeholderTextColor="#999"
-                  style={styles.commentTextInput}
-                  value={commentText}
-                  onChangeText={setCommentText}
-                  editable={!isSubmitting}
-                />
-                <View style={styles.commentInputActions}>
-                  <TouchableOpacity>
-                    <Ionicons name="at" size={24} color="#999" />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Ionicons name="happy-outline" size={24} color="#999" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleSubmitComment}
-                    disabled={!commentText.trim() || isSubmitting}
-                    style={[
-                      styles.sendButton,
-                      (!commentText.trim() || isSubmitting) &&
-                        styles.sendButtonDisabled,
-                    ]}
-                  >
-                    {isSubmitting ? (
-                      <ActivityIndicator size="small" color="white" />
-                    ) : (
-                      <Ionicons name="send" size={24} color="white" />
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
         </View>
       </ScrollView>
-      
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home-outline" size={24} color="#FF4B55" />
-          <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="heart-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Favorites</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="ticket-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Tickets</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="settings-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Settings</Text>
-        </TouchableOpacity>
-      </View>
+      <RoleNavigation role="user" />
+
       {showPayment && !closedByUser && <Payment onClose={closePayment} />}
     </View>
   );
@@ -779,4 +779,4 @@ const styles = StyleSheet.create({
   replyButtonDisabled: {
     backgroundColor: '#666',
   },
-}); 
+});

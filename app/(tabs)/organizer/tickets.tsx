@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
 import Header from '../../../src/components/Header';
 import TicketCard from '../../../src/components/TicketCard';
 import Barcode from '../../../src/components/barcode';
 import { AntDesign } from '@expo/vector-icons';
+import RoleNavigation from '@/src/components/Navigation';
 
 const OrganizerTickets: React.FC = () => {
-  const router = useRouter();
   const [isUpdateTicket, setupdateTicket] = useState(false);
 
   // Sample ticket data
@@ -174,6 +173,7 @@ const OrganizerTickets: React.FC = () => {
               </View>
             </View>
           </ScrollView>
+          <RoleNavigation role="organizer" />
         </View>
       )}
     </View>

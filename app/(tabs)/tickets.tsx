@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Barcode from '../../src/components/barcode';
+import Header from '@/src/components/Header';
+import RoleNavigation from '@/src/components/Navigation';
 
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
@@ -43,25 +45,13 @@ const tickets = [
 
 export default function TicketsScreen() {
   return (
-    <LinearGradient
-      colors={['#4A1D3A', '#21152C']}
-      style={styles.container}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.logo}>TiXLY</Text>
-        <View style={styles.headerRight}>
-          <View style={styles.notificationBadge}>
-            <Ionicons name="notifications-outline" size={24} color="white" />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
-          </View>
-          <Image source={{ uri: dummyProfilePic }} style={styles.profilePic} />
-        </View>
-      </View>
+    <LinearGradient colors={['#4A1D3A', '#21152C']} style={styles.container}>
+      <Header />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         {tickets.map((ticket) => (
           <View key={ticket.id} style={styles.ticketCard}>
             {/* Left notch */}
@@ -75,7 +65,9 @@ export default function TicketsScreen() {
               <Text style={styles.ticketTitle}>{ticket.title}</Text>
               <View style={styles.locationRow}>
                 <Ionicons name="location-outline" size={16} color="#999" />
-                <Text style={styles.locationText}>{ticket.location} | {ticket.time}</Text>
+                <Text style={styles.locationText}>
+                  {ticket.location} | {ticket.time}
+                </Text>
               </View>
               <View style={styles.dateRow}>
                 <Text style={styles.dateText}>{ticket.date}</Text>
@@ -89,25 +81,7 @@ export default function TicketsScreen() {
         ))}
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="heart-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Favorites</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="ticket" size={24} color="#FF4B55" />
-          <Text style={[styles.navText, styles.activeNavText]}>Tickets</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="settings-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Settings</Text>
-        </TouchableOpacity>
-      </View>
+      <RoleNavigation role="user" />
     </LinearGradient>
   );
 }
@@ -260,4 +234,4 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#FF4B55',
   },
-}); 
+});

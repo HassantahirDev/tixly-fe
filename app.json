@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "src/assets/images/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#000000"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -18,10 +13,7 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
-      }
+      "package": "com.mralihassan.tixly"
     },
     "web": {
       "favicon": "src/assets/images/favicon.png"
@@ -30,8 +22,14 @@
       "expo-router"
     ],
     "scheme": "tixly",
-    "fonts": {
-      "AldotheApache": "./assets/fonts/AldotheApache.ttf"
-    }
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "4b0f3d45-457a-483e-b453-68e25331633c"
+      }
+    },
+    "owner": "mralihassan"
   }
 }

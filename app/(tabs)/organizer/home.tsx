@@ -13,6 +13,7 @@ import Header from '../../../src/components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { LinearGradient } from 'expo-linear-gradient';
+import RoleNavigation from '@/src/components/Navigation';
 
 const Jiguy = require('../../../src/assets/images/jiguy.svg');
 const event = require('../../../src/assets/images/event.png');
@@ -301,6 +302,8 @@ const organizerHome: React.FC = () => {
           ))}
         </View>
       </ScrollView>
+
+      <RoleNavigation role="organizer" />
     </View>
   );
 };

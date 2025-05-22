@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import Header from '@/src/components/Header';
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
 export default function ProfileSettingScreen() {
@@ -34,29 +35,7 @@ export default function ProfileSettingScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={styles.logo}>TiXLY</Text>
-          <View style={styles.headerRight}>
-            <View style={styles.notificationBadge}>
-              <TouchableOpacity>
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color="white"
-                />
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>3</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity>
-              <Image
-                source={{ uri: dummyProfilePic }}
-                style={styles.profilePic}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+       <Header/>
         <View style={styles.profileContainer}>
           <Image
             source={{ uri: dummyProfilePic }}

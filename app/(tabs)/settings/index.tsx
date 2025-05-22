@@ -8,64 +8,24 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
 } from 'react-native';
 import NotificationScreen from './notification';
 import ProfileSettingScreen from './profile';
+import Header from '@/src/components/Header';
+import RoleNavigation from '@/src/components/Navigation';
 
 const Terms = require('../../../src/assets/images/Terms.svg');
 const Voucher = require('../../../src/assets/images/Voucher.svg');
 const Privacy = require('../../../src/assets/images/Privacy.svg');
-const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
 export default function SettingsScreen() {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileScreen, setShowProfileScreen] = useState(false);
-  const [isdeleteAccount, setIsdeleteAccount] = useState(false); 
-  const [isLogout, setIsLogout] = useState(false); 
-
-   const handleNotificationClick = () => {
-     setShowNotifications(true); 
-   };
-
-   if (showNotifications) {
-     return <NotificationScreen />; 
-   }
-
-   const handleProfileClick = () => {
-     setShowProfileScreen(true);
-   };
-
-   if (showProfileScreen) {
-     return <ProfileSettingScreen />;
-   }
+  const [isdeleteAccount, setIsdeleteAccount] = useState(false);
+  const [isLogout, setIsLogout] = useState(false);
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={styles.logo}>TiXLY</Text>
-          <View style={styles.headerRight}>
-            <View style={styles.notificationBadge}>
-              <TouchableOpacity onPress={handleNotificationClick}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color="white"
-                />
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>3</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={handleProfileClick}>
-              <Image
-                source={{ uri: dummyProfilePic }}
-                style={styles.profilePic}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <Header />
         <View style={styles.settingContainer}>
           <View style={styles.settingRow}>
             <View style={styles.leftContainer}>
@@ -198,6 +158,7 @@ export default function SettingsScreen() {
           </View>
         </View>
       )}
+      <RoleNavigation role="user" />
     </View>
   );
 }
@@ -358,6 +319,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     paddingBottom: 20,
+    zIndex: 50,
   },
   ticketOverlayContent: {
     width: '100%',
