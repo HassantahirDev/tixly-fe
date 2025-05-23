@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://52.21.157.46:3000/'; // Replace with your actual API URL
+const BASE_URL = '/api/'; // Use relative path for proxying via Vercel
 
 // Types
 export interface SignUpData {
@@ -71,4 +71,4 @@ export const homeApi = {
   createComment: (data: { content: string; eventId: string }) => api.post('/events/comments', data)
 };
 
-export default api; 
+export default api;
