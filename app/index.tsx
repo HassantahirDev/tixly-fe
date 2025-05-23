@@ -49,6 +49,7 @@ export default function Splash() {
 
       // Not first time, check authentication
       const token = await AsyncStorage.getItem('token');
+      const userRole = await AsyncStorage.getItem('userRole');
       
       if (token) {
         // Validate the token
@@ -56,7 +57,11 @@ export default function Splash() {
         
         if (isValid) {
           // Token is valid, user is logged in
-          router.replace('/(tabs)');
+          if (userRole && userRole.toUpperCase() === 'ADMIN') {
+            router.replace('/(tabs)/admin-home');
+          } else {
+            router.replace('/(tabs)');
+          }
         } else {
           // Token is invalid, clear it and redirect to login
           await AsyncStorage.removeItem('token');
@@ -110,4 +115,4 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist_700Bold',
     letterSpacing: 2,
   },
-}); 
+});

@@ -107,6 +107,8 @@ export default function LoginScreen() {
         const result = await dispatch(login({ email, password, role })).unwrap();
         
         if (result) {
+          console.log('Login successful:', result);
+          await AsyncStorage.setItem('userRole', result.data.role);
           // Store token in AsyncStorage (already done in auth slice)
           showToast('Login successful! Redirecting...', 'success');
           setTimeout(() => {
