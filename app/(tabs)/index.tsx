@@ -9,23 +9,19 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchEventCategories,
   fetchFeaturedEvents,
+  fetchTopEventsByLocation,
 } from '@/src/store/slices/homeSlice';
 import { AppDispatch, RootState } from '@/src/store/store';
 import Header from '@/src/components/Header';
 import RoleNavigation from '@/src/components/Navigation';
 
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
-const dummyConcertImage =
-  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
-const dummyAtifImage =
-  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -36,16 +32,19 @@ export default function HomeScreen() {
   const { featuredEvents, featuredEventsLoading, featuredEventsError } =
     useSelector((state: RootState) => state.home);
 
+    const {
+      topEventsByLocation,
+      topEventsByLocationLoading,
+      topEventsByLocationError,
+    } = useSelector((state: RootState) => state.home);
+
   useEffect(() => {
     dispatch(fetchEventCategories());
     dispatch(fetchFeaturedEvents());
+    dispatch(fetchTopEventsByLocation({ location: 'lahore', limit: 10 }));
   }, [dispatch]);
 
   console.log('categories', featuredEvents);
-
-  const handleJoinNow = () => {
-    router.push('/1'); // Using '1' as a dummy event ID
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -191,30 +190,49 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.topEventCard}>
-            <Image
-              source={{ uri: dummyAtifImage }}
-              style={styles.topEventImage}
-            />
-            <View style={styles.topEventDetails}>
-              <Text style={styles.topEventTitle}>
-                Tixly concert - Atif Aslam
-              </Text>
-              <View style={styles.locationContainer}>
-                <Ionicons name="location-outline" size={16} color="#E1E1E1" />
-                <Text style={styles.locationText}>Bahria Town, Lahore</Text>
-              </View>
-              <Text style={styles.timeText}>
-                08:00 PM - 10:00 PM Apr 08, 2025
-              </Text>
-            </View>
-            <View style={styles.topEventPrice}>
-              <Text style={styles.priceText}>PKR 500</Text>
-            </View>
-            <TouchableOpacity style={styles.topEventFavorite}>
-              <Ionicons name="heart-outline" size={24} color="white" />
-            </TouchableOpacity>
-          </TouchableOpacity>
+          {topEventsByLocationLoading ? (
+            <ActivityIndicator color="#FF4B55" size="small" />
+          ) : topEventsByLocationError ? (
+            <Text style={styles.errorText}>{topEventsByLocationError}</Text>
+          ) : topEventsByLocation && topEventsByLocation.length > 0 ? (
+            topEventsByLocation.map((event) => (
+              <TouchableOpacity
+                key={event.id}
+                style={styles.topEventCard}
+                onPress={() => router.push(`/event-detail/${event.id}`)}
+              >
+                <Image
+                  source={{ uri: event.attachment }}
+                  style={styles.topEventImage}
+                />
+                <View style={styles.topEventDetails}>
+                  <Text style={styles.topEventTitle}>{event.title}</Text>
+                  <View style={styles.locationContainer}>
+                    <Ionicons
+                      name="location-outline"
+                      size={16}
+                      color="#E1E1E1"
+                    />
+                    <Text style={styles.locationText}>{event.location}</Text>
+                  </View>
+                  <Text style={styles.timeText}>
+                    {formatTime(event.startTime)} - {formatTime(event.endTime)}{' '}
+                    {formatDate(event.date).month} {formatDate(event.date).day},{' '}
+                    {new Date(event.date).getFullYear()}
+                  </Text>
+                </View>
+                <View style={styles.topEventPrice}>
+                  <Text style={styles.priceText}>PKR {event.price}</Text>
+                </View>
+                <TouchableOpacity style={styles.topEventFavorite}>
+                  <Ionicons name="heart-outline" size={24} color="white" />
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.errorText}>No top events found</Text>
+          )}
+          
         </View>
       </ScrollView>
 
@@ -419,12 +437,21 @@ const styles = StyleSheet.create({
   attendeesCount: {
     color: 'white',
     fontSize: 16,
-    marginRight: 10,
     fontWeight: 'bold',
+    backgroundColor: '#7C0004',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    textAlign: 'center',
+    lineHeight: 40, 
+    overflow: 'hidden',
+    marginRight: -8,
   },
+
   attendeeImages: {
     flexDirection: 'row',
   },
+  
   attendeeImage: {
     width: 40,
     height: 40,

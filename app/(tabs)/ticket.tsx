@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -11,7 +10,6 @@ export default function TicketScreen() {
 
   return (
     <View  style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -270,4 +268,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Urbanist_600SemiBold',
   },
-}); 
+});

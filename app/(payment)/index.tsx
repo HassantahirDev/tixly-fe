@@ -23,7 +23,7 @@ interface PaymentProps {
 
 const Payment: React.FC<PaymentProps> = ({ onClose }) => {
   const { id } = useLocalSearchParams();
-  const { featuredEvents } = useSelector((state: RootState) => state.home);
+  const { selectedEvent } = useSelector((state: RootState) => state.home);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [showAccountDetailsForm, setShowAccountDetailsForm] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
@@ -70,7 +70,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
     'Bank Transfer',
     'Credit Card',
   ];
-  const event = featuredEvents?.find((event) => event.id === id);
+  // const event = featuredEvents?.find((event) => event.id === id);
 
   return (
     <Formik
@@ -184,7 +184,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                       onPress={() => setShowPaymentMethod(true)}
                     >
                       <Text style={styles.buyButtonText}>
-                        Buy it - PKR {event?.price}
+                        Buy it - PKR {selectedEvent?.price}
                       </Text>
                     </TouchableOpacity>
                   </>

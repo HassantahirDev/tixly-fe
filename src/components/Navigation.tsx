@@ -20,7 +20,11 @@ export default function RoleNavigation({ role }: RoleNavigationProps) {
     icon: 'home' | 'heart-outline' | 'ticket-outline' | 'settings-outline';
     path: string;
   }[] = [
-    { name: 'Home', icon: 'home', path: `${basePath}/home` },
+    {
+      name: 'Home',
+      icon: 'home',
+      path: role === 'organizer' ? '/organizer/home' : '/',
+    },
     { name: 'Favorites', icon: 'heart-outline', path: `${basePath}/favorites` },
     { name: 'Tickets', icon: 'ticket-outline', path: `${basePath}/tickets` },
     {
@@ -34,9 +38,7 @@ export default function RoleNavigation({ role }: RoleNavigationProps) {
     <View style={styles.container}>
       <View style={styles.bottomNav}>
         {navItems.map((item) => {
-          const isActive =
-            pathname === item.path ||
-            (pathname === '/' && item.path === '/home');
+          const isActive = pathname === item.path;
 
           return (
             <TouchableOpacity
