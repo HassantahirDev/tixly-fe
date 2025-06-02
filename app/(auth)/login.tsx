@@ -27,7 +27,7 @@ export default function LoginScreen() {
   });
   
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const { isLoading, error, userRole } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (error) {
@@ -107,12 +107,17 @@ export default function LoginScreen() {
         const result = await dispatch(login({ email, password, role })).unwrap();
         
         if (result) {
-          console.log('Login successful:', result);
-          await AsyncStorage.setItem('userRole', result.data.role);
-          // Store token in AsyncStorage (already done in auth slice)
+          // Store user role in AsyncStorage (support ADMIN)
+          if (result.data && result.data.role) {
+            await AsyncStorage.setItem('userRole', result.data.role.toUpperCase());
+          }
           showToast('Login successful! Redirecting...', 'success');
           setTimeout(() => {
-            router.replace('/(tabs)');
+            if (result.data && result.data.role && result.data.role.toUpperCase() === 'ADMIN') {
+              router.replace('/(tabs)/admin/home');
+            } else {
+              router.replace('/(tabs)');
+            }
           }, 1000);
         }
       } catch (loginError: any) {

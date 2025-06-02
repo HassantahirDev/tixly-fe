@@ -58,7 +58,7 @@ export default function Splash() {
         if (isValid) {
           // Token is valid, user is logged in
           if (userRole && userRole.toUpperCase() === 'ADMIN') {
-            router.replace('/(tabs)/admin-home');
+            router.replace('/(tabs)/admin/home');
           } else {
             router.replace('/(tabs)');
           }

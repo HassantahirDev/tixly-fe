@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEventCategories, fetchFeaturedEvents } from '@/src/store/slices/homeSlice';
 import { AppDispatch, RootState } from '@/src/store/store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 const dummyConcertImage = 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
@@ -21,6 +22,15 @@ export default function HomeScreen() {
     dispatch(fetchEventCategories());
     dispatch(fetchFeaturedEvents());
   }, [dispatch]);
+
+  React.useEffect(() => {
+    (async () => {
+      const userRole = await AsyncStorage.getItem('userRole');
+      if (userRole && userRole.toUpperCase() === 'ADMIN') {
+        router.replace('/(tabs)/admin/home');
+      }
+    })();
+  }, []);
 
   console.log("categories", featuredEvents);
 
@@ -504,4 +514,4 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 20,
   },
-}); 
+});
