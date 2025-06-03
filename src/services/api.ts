@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://52.21.157.46:3000'; 
+const BASE_URL = 'http://localhost:2000/'; 
 
 // Types
 export interface SignUpData {
@@ -86,7 +86,13 @@ export const authApi = {
   login: (data: LoginData) => api.post('/auth/login', data),
   verifyOtp: (data: VerifyOtpData) => api.post('/auth/verify', data),
   sendOtp: (data: SendOtpData) => api.post('/auth/send-otp', data),
-  updatePassword: (data: updatePasswordData) => api.post('/auth/update-password', data),
+  updatePassword: (data: updatePasswordData) =>
+    api.post('/auth/update-password', data),
+  updateUserById: (
+    id: string,
+    data: { email?: string; name?: string; username?: string }
+  ) => api.put(`/user/${id}`, data),
+  getUserById: (id: string) => api.get(`/user/${id}`),
 };
 
 export const homeApi = {

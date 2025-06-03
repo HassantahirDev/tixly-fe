@@ -76,9 +76,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    borderTopWidth: 1,
+    borderTopColor: '#949494',
   },
   navItem: {
     alignItems: 'center',
+    paddingTop: 10,
   },
   navText: {
     color: '#E1E1E1',

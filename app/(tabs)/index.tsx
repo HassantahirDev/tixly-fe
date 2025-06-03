@@ -84,7 +84,12 @@ export default function HomeScreen() {
 
         {/* Categories */}
         <View style={styles.categoriesSection}>
-          <Text style={styles.sectionTitle}>Categories</Text>
+          <View style={styles.categoriesHeader}>
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See all</Text>
+            </TouchableOpacity>
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -232,7 +237,6 @@ export default function HomeScreen() {
           ) : (
             <Text style={styles.errorText}>No top events found</Text>
           )}
-          
         </View>
       </ScrollView>
 
@@ -312,12 +316,17 @@ const styles = StyleSheet.create({
   categoriesSection: {
     paddingRight: 20,
   },
+  categoriesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
-    marginLeft: 20,
-    marginBottom: 15,
     fontFamily: 'Urbanist_600SemiBold',
   },
 
@@ -443,7 +452,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     textAlign: 'center',
-    lineHeight: 40, 
+    lineHeight: 40,
     overflow: 'hidden',
     marginRight: -8,
   },
@@ -451,7 +460,7 @@ const styles = StyleSheet.create({
   attendeeImages: {
     flexDirection: 'row',
   },
-  
+
   attendeeImage: {
     width: 40,
     height: 40,
@@ -487,7 +496,7 @@ const styles = StyleSheet.create({
     // marginBottom: 15,
   },
   seeAllText: {
-    color: '#FF4B55',
+    color: '#E1E1E1',
     fontSize: 14,
     fontFamily: 'Urbanist_600SemiBold',
   },

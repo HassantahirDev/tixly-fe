@@ -9,8 +9,6 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import NotificationScreen from './notification';
-import ProfileSettingScreen from './profile';
 import Header from '@/src/components/Header';
 import RoleNavigation from '@/src/components/Navigation';
 

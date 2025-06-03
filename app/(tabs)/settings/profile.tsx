@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,81 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import Header from '@/src/components/Header';
+import RoleNavigation from '@/src/components/Navigation';
+import { useAppSelector, useAppDispatch } from '../../../src/store/hooks';
+import { fetchUserById, updateUserById } from '@/src/store/slices/authSlice';
+import { getCurrentUserId } from '@/src/services/api';
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
 export default function ProfileSettingScreen() {
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
   const [profileImage, setProfileImage] = useState(dummyProfilePic);
-  const [isModalVisible, setIsModalVisible] = useState(false); 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [contact, setContact] = useState('');
+
+  const [modalUsername, setModalUsername] = useState('');
+  const [modalFullName, setModalFullName] = useState('');
+  const [modalContact, setModalContact] = useState('');
+
+  useEffect(() => {
+    const userId = getCurrentUserId();
+    if (userId) {
+      dispatch(fetchUserById(userId));
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (user) {
+      setUsername(user.username || '');
+      setFullName(user.name || '');
+      setContact(user.email || '');
+      setModalUsername(user.username || '');
+      setModalFullName(user.name || '');
+      setModalContact(user.email || '');
+    }
+  }, [user]);
+  const handleCloseModal = () => {
+    setModalUsername(username);
+    setModalFullName(fullName);
+    setModalContact(contact);
+    setIsModalVisible(false);
+  };
+
+  const handleUpdateProfile = async () => {
+    const userId = getCurrentUserId();
+    if (userId) {
+      try {
+        const payload = {
+          username: modalUsername,
+          name: modalFullName,
+          email: modalContact,
+        };
+
+        await dispatch(
+          updateUserById({
+            id: userId,
+            data: payload,
+          })
+        ).unwrap();
+        setUsername(modalUsername);
+        setFullName(modalFullName);
+        setContact(modalContact);
+        setIsModalVisible(false);
+      } catch (error) {
+        console.error('Failed to update profile:', error);
+      }
+    } else {
+      console.error('User ID is not available');
+    }
+  };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -35,12 +100,9 @@ export default function ProfileSettingScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
-       <Header/>
+        <Header />
         <View style={styles.profileContainer}>
-          <Image
-            source={{ uri: dummyProfilePic }}
-            style={styles.profilePicture}
-          />
+          <Image source={{ uri: profileImage }} style={styles.profilePicture} />
           <TouchableOpacity style={styles.cameraIcon} onPress={pickImage}>
             <Ionicons name="camera" size={24} color="#BA0507" />
           </TouchableOpacity>
@@ -50,33 +112,36 @@ export default function ProfileSettingScreen() {
             <Text style={styles.inputLabel}>Username</Text>
             <TextInput
               style={styles.inputBox}
-              placeholder="Enter Account Number"
               placeholderTextColor="#949494"
-              value="userffe4382"
+              value={username}
+              onChangeText={setUsername}
+              editable={false}
+              pointerEvents="none"
             />
           </View>
-
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Full name</Text>
             <TextInput
               style={styles.inputBox}
-              placeholder="Enter Account Number"
               placeholderTextColor="#949494"
-              value="John Doe"
+              value={fullName}
+              onChangeText={setFullName}
+              editable={false}
+              pointerEvents="none"
             />
           </View>
-
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email / Contact No</Text>
             <TextInput
               style={styles.inputBox}
-              placeholder="Enter Account Number"
               placeholderTextColor="#949494"
-              value="+92 308 5438903"
+              value={contact}
+              onChangeText={setContact}
+              editable={false}
+              pointerEvents="none"
             />
           </View>
         </View>
-
         <TouchableOpacity
           style={styles.buyButton}
           onPress={() => setIsModalVisible(true)}
@@ -84,18 +149,18 @@ export default function ProfileSettingScreen() {
           <Text style={styles.buyButtonText}>Update Profile</Text>
         </TouchableOpacity>
       </ScrollView>
-
+      <RoleNavigation role="user" />
       {isModalVisible && (
         <View style={styles.ticketOverlay}>
           <View style={styles.ticketOverlayContent}>
             <View style={styles.ticketHeader}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleCloseModal}>
                 <AntDesign name="arrowleft" size={24} color="#F0F0F0" />
               </TouchableOpacity>
               <Text style={styles.ticketTitle}>Edit Personal Info</Text>
               <TouchableOpacity
                 style={styles.ticketCloseButton}
-                onPress={() => setIsModalVisible(false)}
+                onPress={handleCloseModal}
               >
                 <AntDesign name="close" size={24} color="#F0F0F0" />
               </TouchableOpacity>
@@ -107,7 +172,8 @@ export default function ProfileSettingScreen() {
             <TextInput
               style={styles.inputProfileBox}
               placeholderTextColor="#949494"
-              value="userffe4382"
+              value={modalUsername}
+              onChangeText={setModalUsername}
             />
           </View>
           <View style={styles.inputProfileContainer}>
@@ -115,7 +181,8 @@ export default function ProfileSettingScreen() {
             <TextInput
               style={styles.inputProfileBox}
               placeholderTextColor="#949494"
-              value="John Doe"
+              value={modalFullName}
+              onChangeText={setModalFullName}
             />
           </View>
           <View style={styles.inputProfileContainer}>
@@ -123,18 +190,21 @@ export default function ProfileSettingScreen() {
             <TextInput
               style={styles.inputProfileBox}
               placeholderTextColor="#949494"
-              value="+92 305 2345678"
+              value={modalContact}
+              onChangeText={setModalContact}
             />
           </View>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => setIsModalVisible(false)}
+              onPress={handleCloseModal}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.updateButton}>
+            <TouchableOpacity
+              style={styles.updateButton}
+              onPress={handleUpdateProfile}
+            >
               <Text style={styles.updateButtonText}>Confirm</Text>
             </TouchableOpacity>
           </View>
