@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface User {
   email: string;
   name?: string;
+  username?: string;
   role: 'USER' | 'ORGANIZER';
   profilePic?: string;
 }
@@ -92,6 +93,48 @@ export const updatePassword = createAsyncThunk(
   }
 );
 
+export const updateUserById = createAsyncThunk(
+  'auth/updateUserById',
+  async (
+    {
+      id,
+      data,
+    }: {
+      id: string;
+      data: { email?: string; name?: string; username?: string };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await authApi.updateUserById(id, data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update user'
+      );
+    }
+  }
+);
+
+export const fetchUserById = createAsyncThunk(
+  'auth/fetchUserById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await authApi.getUserById(id);
+      return response.data;
+    } catch (error: unknown) {
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        const err = error as { response?: { data?: { message?: string } } };
+        return rejectWithValue(
+          err.response?.data?.message || 'Failed to fetch user'
+        );
+      }
+      return rejectWithValue('Failed to fetch user');
+    }
+  }
+);
+
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -133,7 +176,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isAuthenticated = true;
       state.user = action.payload.user;
-      console.log("action.payload.token", action.payload);
+      console.log('action.payload.token', action.payload);
       state.token = action.payload.data.access_token;
     });
     builder.addCase(login.rejected, (state, action) => {
@@ -181,6 +224,34 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload as string;
     });
+
+    // Update User by ID
+    builder.addCase(updateUserById.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(updateUserById.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.user = { ...state.user, ...action.payload }; // merge updated fields
+    });
+    builder.addCase(updateUserById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload as string;
+    })
+
+    builder.addCase(fetchUserById.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchUserById.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.user = action.payload.data;
+    });
+    builder.addCase(fetchUserById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload as string;
+    });
+    
   },
 });
 

@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import Header from '@/src/components/Header';
+import RoleNavigation from '@/src/components/Navigation';
 
 const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
-const dummyConcertImage = 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
+const dummyConcertImage =
+  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1950&q=80';
 const dummyCommentPic = 'https://randomuser.me/api/portraits/women/1.jpg';
 
 export default function EventDetailsScreen() {
@@ -48,127 +59,127 @@ export default function EventDetailsScreen() {
     },
 
     {
-        id: 2,
-        author: 'mehwish7343',
-        time: '2 min',
-        text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-        likes: 23,
-        replies: [
-          {
-            id: 1,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 2,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 3,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Another reply that is hidden initially',
-            likes: 15,
-          },
-        ],
-      },
+      id: 2,
+      author: 'mehwish7343',
+      time: '2 min',
+      text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+      likes: 23,
+      replies: [
+        {
+          id: 1,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 2,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 3,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Another reply that is hidden initially',
+          likes: 15,
+        },
+      ],
+    },
 
-      {
-        id: 3,
-        author: 'mehwish7343',
-        time: '2 min',
-        text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-        likes: 23,
-        replies: [
-          {
-            id: 1,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 2,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 3,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Another reply that is hidden initially',
-            likes: 15,
-          },
-        ],
-      },
-      {
-        id: 4,
-        author: 'mehwish7343',
-        time: '2 min',
-        text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-        likes: 23,
-        replies: [
-          {
-            id: 1,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 2,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 3,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Another reply that is hidden initially',
-            likes: 15,
-          },
-        ],
-      },
+    {
+      id: 3,
+      author: 'mehwish7343',
+      time: '2 min',
+      text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+      likes: 23,
+      replies: [
+        {
+          id: 1,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 2,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 3,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Another reply that is hidden initially',
+          likes: 15,
+        },
+      ],
+    },
+    {
+      id: 4,
+      author: 'mehwish7343',
+      time: '2 min',
+      text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+      likes: 23,
+      replies: [
+        {
+          id: 1,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 2,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 3,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Another reply that is hidden initially',
+          likes: 15,
+        },
+      ],
+    },
 
-      {
-        id: 5,
-        author: 'mehwish7343',
-        time: '2 min',
-        text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-        likes: 23,
-        replies: [
-          {
-            id: 1,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 2,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
-            likes: 23,
-          },
-          {
-            id: 3,
-            author: 'mehwish7343',
-            time: '1 min',
-            text: 'Another reply that is hidden initially',
-            likes: 15,
-          },
-        ],
-      },
+    {
+      id: 5,
+      author: 'mehwish7343',
+      time: '2 min',
+      text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+      likes: 23,
+      replies: [
+        {
+          id: 1,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 2,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Glad to see. I wanna go to this concert, The best singer in the town.',
+          likes: 23,
+        },
+        {
+          id: 3,
+          author: 'mehwish7343',
+          time: '1 min',
+          text: 'Another reply that is hidden initially',
+          likes: 15,
+        },
+      ],
+    },
   ];
 
   const renderContent = () => {
@@ -176,12 +187,18 @@ export default function EventDetailsScreen() {
       return (
         <>
           <Text style={styles.description}>
-            Tixly concert opens its doors for a unique virtual adventure full of terrifying surprises! With high-tech and cool special effects, this Metaverse experience offers thrills and chills for all!
+            Tixly concert opens its doors for a unique virtual adventure full of
+            terrifying surprises! With high-tech and cool special effects, this
+            Metaverse experience offers thrills and chills for all!
           </Text>
           <Text style={styles.highlightsTitle}>Highlights</Text>
           <View style={styles.highlightsList}>
-            <Text style={styles.highlightItem}>• Face your fears in a realistic experience</Text>
-            <Text style={styles.highlightItem}>• Immerse yourself in sheer horror with the latest technology</Text>
+            <Text style={styles.highlightItem}>
+              • Face your fears in a realistic experience
+            </Text>
+            <Text style={styles.highlightItem}>
+              • Immerse yourself in sheer horror with the latest technology
+            </Text>
           </View>
         </>
       );
@@ -190,12 +207,15 @@ export default function EventDetailsScreen() {
     return (
       <View style={styles.commentsSection}>
         <Text style={styles.commentsCount}>7 Comments</Text>
-        
+
         {comments.map((comment) => (
           <View key={comment.id}>
             {/* Main comment */}
             <View style={styles.commentItem}>
-              <Image source={{ uri: dummyCommentPic }} style={styles.commentAvatar} />
+              <Image
+                source={{ uri: dummyCommentPic }}
+                style={styles.commentAvatar}
+              />
               <View style={styles.commentContent}>
                 <View style={styles.commentHeader}>
                   <Text style={styles.commentAuthor}>{comment.author}</Text>
@@ -207,12 +227,14 @@ export default function EventDetailsScreen() {
                     <Text style={styles.actionText}>Reply</Text>
                   </TouchableOpacity>
                   <Text style={styles.actionDivider}>•</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.commentAction}
                     onPress={() => setShowAllReplies(!showAllReplies)}
                   >
                     <Text style={styles.actionText}>
-                      {showAllReplies ? 'Hide Replies' : `View ${comment.replies.length} Replies`}
+                      {showAllReplies
+                        ? 'Hide Replies'
+                        : `View ${comment.replies.length} Replies`}
                     </Text>
                   </TouchableOpacity>
                   <Text style={styles.actionDivider}>•</Text>
@@ -230,8 +252,14 @@ export default function EventDetailsScreen() {
             {comment.replies
               .slice(0, showAllReplies ? comment.replies.length : 2)
               .map((reply) => (
-                <View key={reply.id} style={[styles.commentItem, styles.replyItem]}>
-                  <Image source={{ uri: dummyCommentPic }} style={styles.commentAvatar} />
+                <View
+                  key={reply.id}
+                  style={[styles.commentItem, styles.replyItem]}
+                >
+                  <Image
+                    source={{ uri: dummyCommentPic }}
+                    style={styles.commentAvatar}
+                  />
                   <View style={styles.commentContent}>
                     <View style={styles.commentHeader}>
                       <Text style={styles.commentAuthor}>{reply.author}</Text>
@@ -244,7 +272,9 @@ export default function EventDetailsScreen() {
                       </TouchableOpacity>
                       <Text style={styles.actionDivider}>•</Text>
                       <TouchableOpacity style={styles.commentAction}>
-                        <Text style={styles.actionText}>{reply.likes} Likes</Text>
+                        <Text style={styles.actionText}>
+                          {reply.likes} Likes
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -257,7 +287,7 @@ export default function EventDetailsScreen() {
         ))}
 
         <View style={styles.commentInput}>
-          <TextInput 
+          <TextInput
             placeholder="Leave a Comment.."
             placeholderTextColor="#999"
             style={styles.commentTextInput}
@@ -279,24 +309,14 @@ export default function EventDetailsScreen() {
     <LinearGradient colors={['#7F0102', '#0B0179']} style={styles.container}>
       <ScrollView style={styles.scrollView}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <View style={styles.headerRight}>
-            <View style={styles.notificationBadge}>
-              <Ionicons name="notifications-outline" size={24} color="white" />
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>3</Text>
-              </View>
-            </View>
-            <Image source={{ uri: dummyProfilePic }} style={styles.profilePic} />
-          </View>
-        </View>
+        <Header />
 
         {/* Event Card */}
         <View style={styles.eventCard}>
-          <Image source={{ uri: dummyConcertImage }} style={styles.eventImage} />
+          <Image
+            source={{ uri: dummyConcertImage }}
+            style={styles.eventImage}
+          />
           <View style={styles.dateChip}>
             <Text style={styles.dateText}>02</Text>
             <Text style={styles.monthText}>Apr</Text>
@@ -309,7 +329,9 @@ export default function EventDetailsScreen() {
               <Ionicons name="share-social-outline" size={24} color="white" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.eventTitle}>Tixly concert - The Immersive Experience</Text>
+          <Text style={styles.eventTitle}>
+            Tixly concert - The Immersive Experience
+          </Text>
         </View>
 
         {/* Buy Button */}
@@ -341,42 +363,38 @@ export default function EventDetailsScreen() {
         {/* Details Section */}
         <View style={styles.detailsCard}>
           <View style={styles.tabsContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tab, activeTab === 'details' && styles.activeTab]}
               onPress={() => setActiveTab('details')}
             >
-              <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>Details</Text>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'details' && styles.activeTabText,
+                ]}
+              >
+                Details
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tab, activeTab === 'comments' && styles.activeTab]}
               onPress={() => setActiveTab('comments')}
             >
-              <Text style={[styles.tabText, activeTab === 'comments' && styles.activeTabText]}>Comments</Text>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'comments' && styles.activeTabText,
+                ]}
+              >
+                Comments
+              </Text>
             </TouchableOpacity>
           </View>
           {renderContent()}
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/')}>
-          <Ionicons name="home-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="heart-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Favorites</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="ticket-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Tickets</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="settings-outline" size={24} color="#E1E1E1" />
-          <Text style={styles.navText}>Settings</Text>
-        </TouchableOpacity>
-      </View>
+      <RoleNavigation role="user" />
     </LinearGradient>
   );
 }
@@ -680,4 +698,4 @@ const styles = StyleSheet.create({
   replyItem: {
     marginLeft: 40,
   },
-}); 
+});

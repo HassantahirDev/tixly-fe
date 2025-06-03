@@ -106,15 +106,16 @@ export default function LoginScreen() {
         // Test Case 5: API call and response handling
         const result = await dispatch(login({ email, password, role })).unwrap();
         
-        if (result) {
-          // Store user role in AsyncStorage (support ADMIN)
-          if (result.data && result.data.role) {
-            await AsyncStorage.setItem('userRole', result.data.role.toUpperCase());
-          }
+        if (result?.success) {
+          console.log('result12321', result);
+
+          const role = result?.data?.role;
+
           showToast('Login successful! Redirecting...', 'success');
+
           setTimeout(() => {
-            if (result.data && result.data.role && result.data.role.toUpperCase() === 'ADMIN') {
-              router.replace('/(tabs)/admin/home');
+            if (role === 'ORGANIZER') {
+              router.replace('/organizer/home');
             } else {
               router.replace('/(tabs)');
             }

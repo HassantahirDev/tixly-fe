@@ -115,4 +115,4 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist_700Bold',
     letterSpacing: 2,
   },
-});
+}); 

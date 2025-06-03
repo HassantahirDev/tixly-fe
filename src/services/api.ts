@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://localhost:2000/'; // Replace with your actual API URL
+const BASE_URL = 'http://localhost:2000/'; 
 
 // Types
 export interface SignUpData {
@@ -10,6 +10,30 @@ export interface SignUpData {
   name: string;
   role: 'USER' | 'ORGANIZER';
 }
+
+export   function hasUserId(like: unknown): like is { userId: string } {
+    return (
+      typeof like === 'object' &&
+      like !== null &&
+      'userId' in like &&
+      typeof (like as { userId: unknown }).userId === 'string'
+    );
+  }
+
+  export   const getCurrentUserId = (): string | null => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return null;
+  
+        const payload = token.split('.')[1];
+        const decodedPayload = JSON.parse(atob(payload));
+        console.log('firstN32321', decodedPayload.sub);
+        return decodedPayload.sub;
+      } catch (error) {
+        console.error('Failed to parse token:', error);
+        return null;
+      }
+    };
 
 export interface LoginData {
   email: string;
@@ -64,52 +88,53 @@ export const authApi = {
   login: (data: LoginData) => api.post('/auth/login', data),
   verifyOtp: (data: VerifyOtpData) => api.post('/auth/verify', data),
   sendOtp: (data: SendOtpData) => api.post('/auth/send-otp', data),
-  updatePassword: (data: updatePasswordData) => api.post('/auth/update-password', data),
+  updatePassword: (data: updatePasswordData) =>
+    api.post('/auth/update-password', data),
+  updateUserById: (
+    id: string,
+    data: { email?: string; name?: string; username?: string }
+  ) => api.put(`/user/${id}`, data),
+  getUserById: (id: string) => api.get(`/user/${id}`),
 };
 
 export const homeApi = {
   getEventCategories: () => api.get('/eventCategory'),
   getFeaturedEvents: () => api.post('/events/top/featured'),
-  createComment: (data: { content: string; eventId: string }) => api.post('/events/comments', data),
-  getUpcomingEvents: () => api.get('/events/upcoming'),
-  getOngoingEvents: () => api.get('/events/ongoing'),
-  getAllEvents: () => api.get('/events'), // <-- Added for admin events page
-  getEventById: (id: string) => api.get(`/events/${id}`), // <-- Added for event details page
+
+  createComment: (data: { content: string; eventId: string }) =>
+    api.post('/events/comments', data),
+
+  getTopEventsByLocation: (location: string, limit: number = 10) =>
+    api.post(
+      `/events/top-by-location`,
+      {},
+      {
+        params: {
+          location,
+          limit,
+        },
+      }
+    ),
+  getEventById: (id: string) => api.get(`/events/${id}`),
+
+  getCommentsByEventId: (eventId: string) =>
+    api.get(`/events/${eventId}/comments`),
+
+  // New API to create a reply to a comment
+  createReplyToComment: (
+    commentId: string,
+    data: { content: string; commentId: string }
+  ) => api.post(`/events/comments/${commentId}/replies`, data),
+
+  // New API to toggle like on a comment
+  toggleCommentLike: (commentId: string) =>
+    api.post(`/events/comments/${commentId}/like`),
+
+  // New API to toggle like on a reply
+  toggleReplyLike: (replyId: string) =>
+    api.post(`/events/replies/${replyId}/like`),
 };
 
-export const imageApi = {
-  uploadSingleImage: async (file: File | { uri: string; name: string; type: string }) => {
-    const formData = new FormData();
-    // Use a runtime check for File constructor existence and file type
-    const isWebFile = typeof File !== 'undefined' && file instanceof File;
-    if (isWebFile) {
-      formData.append('image', file as File);
-    } else {
-      // React Native: append as object with uri, name, type
-      formData.append('image', file as { uri: string; name: string; type: string });
-    }
-    return api.post('/image/upload/single', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
 
-  deleteSingleImage: (publicId: string) => api.delete(`/image/delete/single/${publicId}`),
-};
 
-export const categoryApi = {
-  createCategory: (data: { name: string; desc?: string; attachment?: string }) =>
-    api.post('/eventCategory', data),
-  updateCategory: (id: string, data: { name: string; desc?: string; attachment?: string }) =>
-    api.put(`/eventCategory/${id}`, data),
-};
-
-// User API methods
-export const userApi = {
-  getUserById: (id: string) => api.get(`/user/${id}`),
-  updateUserById: (id: string, data: { email: string; name: string; username: string; profilePic?: string }) =>
-    api.put(`/user/${id}`, data),
-};
-
-export default api;
+export default api; 
