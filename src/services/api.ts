@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://localhost:2000/'; 
+const BASE_URL = 'http://52.21.157.46:3000'; 
 
 // Types
 export interface SignUpData {

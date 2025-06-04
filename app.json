@@ -10,7 +10,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mralihassan.tixly"
     },
     "android": {
       "package": "com.mralihassan.tixly"
