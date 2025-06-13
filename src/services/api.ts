@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://52.21.157.46:3000'; 
+const BASE_URL = 'http://localhost:2000'; 
 
 // Types
 export interface SignUpData {
@@ -120,19 +120,21 @@ export const homeApi = {
   getCommentsByEventId: (eventId: string) =>
     api.get(`/events/${eventId}/comments`),
 
-  // New API to create a reply to a comment
   createReplyToComment: (
     commentId: string,
     data: { content: string; commentId: string }
   ) => api.post(`/events/comments/${commentId}/replies`, data),
 
-  // New API to toggle like on a comment
   toggleCommentLike: (commentId: string) =>
     api.post(`/events/comments/${commentId}/like`),
 
-  // New API to toggle like on a reply
   toggleReplyLike: (replyId: string) =>
     api.post(`/events/replies/${replyId}/like`),
+
+  getBankDetailsByOrganizerId: (id: string, bankName?: string) =>
+    api.get(`/bankDetails/organizer/${id}`, {
+      params: bankName ? { bankName } : {},
+    }),
 };
 
 

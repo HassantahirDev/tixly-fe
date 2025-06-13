@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import { RootState } from '@/src/store/store';
 import { useLocalSearchParams } from 'expo-router';
 import { Formik } from 'formik';
 import * as ImagePicker from 'expo-image-picker';
+import { fetchBankDetailsByOrganizerId } from '@/src/store/slices/homeSlice'; 
+import { useAppDispatch } from '../../src/store/hooks';
 const thankYouImage = require('../../src/assets/images/thankYou.png');
 
 interface PaymentProps {
@@ -22,8 +24,10 @@ interface PaymentProps {
 }
 
 const Payment: React.FC<PaymentProps> = ({ onClose }) => {
+  const dispatch = useAppDispatch();
   const { id } = useLocalSearchParams();
-  const { selectedEvent } = useSelector((state: RootState) => state.home);
+  const { selectedEvent, bankDetails, bankDetailsLoading, bankDetailsError } =
+    useSelector((state: RootState) => state.home);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [showAccountDetailsForm, setShowAccountDetailsForm] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
@@ -31,6 +35,57 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
     null
   );
   const [imageUri, setImageUri] = useState<string | null>(null);
+
+  // Fetch bank details when component mounts
+  useEffect(() => {
+    if (selectedEvent?.organizerId) {
+      dispatch(
+        fetchBankDetailsByOrganizerId({ id: selectedEvent.organizerId })
+      );
+    }
+  }, [dispatch, selectedEvent?.organizerId]);
+
+  // Determine initial form values based on bank details
+  const getInitialValues = () => {
+    let easyPaisaAccountNumber = '';
+    let jazzCashAccountNumber = '';
+    let bankName = '';
+    let bankAccountNumber = '';
+    let accountHolder = 'John Doe'; // Default fallback
+
+    if (bankDetails?.data) {
+      const easyPaisa = bankDetails.data.find(
+        (detail) => detail.bankName === 'Easypaisa'
+      );
+      const jazzCash = bankDetails.data.find(
+        (detail) => detail.bankName === 'Jazzcash'
+      );
+      const otherBank = bankDetails.data.find(
+        (detail) =>
+          detail.bankName !== 'Easypaisa' && detail.bankName !== 'Jazzcash'
+      );
+
+      easyPaisaAccountNumber = easyPaisa?.accountNumber || '';
+      jazzCashAccountNumber = jazzCash?.accountNumber || '';
+      bankName = otherBank?.bankName || '';
+      bankAccountNumber = otherBank?.accountNumber || '';
+      accountHolder =
+        easyPaisa?.accountHolder ||
+        jazzCash?.accountHolder ||
+        otherBank?.accountHolder ||
+        'John Doe';
+    }
+
+    return {
+      ticketCount: 2,
+      selectedMethod: '',
+      accountHolder,
+      easyPaisaAccountNumber,
+      jazzCashAccountNumber,
+      bankAccountNumber,
+      bankName,
+    };
+  };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -52,8 +107,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      // setUploadStatus('success');
-      setUploadStatus('failed');
+      setUploadStatus('success'); // Simulate success for now
       if (uploadStatus === 'success') {
         setShowVerification(false);
       }
@@ -64,36 +118,25 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
     }
   };
 
+  // Define payment options
   const paymentOptions = [
+    'Easypaisa',
     'Jazzcash',
-    'EasyPaisa',
     'Bank Transfer',
     'Credit Card',
   ];
-  // const event = featuredEvents?.find((event) => event.id === id);
 
   return (
     <Formik
-      initialValues={{
-        ticketCount: 2,
-        selectedMethod: '',
-        accountName: 'Tixly Events',
-        easyPaisaAccountNumber: '+92 340 6780099',
-        jazzCashAccountNumber: '+92 304 6780099',
-        bankAccountNumber: '239482439487878',
-        bankName: 'Meezan Bank Limited',
-      }}
+      initialValues={getInitialValues()}
       onSubmit={(values) => {
         console.log('Form Data:', values);
         setShowAccountDetailsForm(false);
         setShowVerification(true);
       }}
+      enableReinitialize // Reinitialize form when initialValues change
     >
-      {({
-        handleSubmit,
-        values,
-        setFieldValue,
-      }) => {
+      {({ handleSubmit, values, setFieldValue }) => {
         return (
           <View style={styles.overlay}>
             <View style={styles.container}>
@@ -136,20 +179,32 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                     ? 'Select your Payment Method'
                     : 'Select No of Tickets'}
                 </Text>
-
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                   <AntDesign name="close" size={24} color="#F0F0F0" />
                 </TouchableOpacity>
               </View>
               <View style={styles.separator} />
 
-              {uploadStatus !== 'success' &&
+              {bankDetailsLoading && (
+                <View style={styles.centerContainer}>
+                  <Text style={styles.text}>Loading bank details...</Text>
+                </View>
+              )}
+
+              {bankDetailsError && (
+                <View style={styles.centerContainer}>
+                  <Text style={styles.errortext}>{bankDetailsError}</Text>
+                </View>
+              )}
+
+              {!bankDetailsLoading &&
+                !bankDetailsError &&
+                uploadStatus !== 'success' &&
                 !showVerification &&
                 !showPaymentMethod &&
                 !showAccountDetailsForm && (
                   <>
                     <View style={styles.header}>
-                      {/* Counter Section */}
                       <View style={styles.counterContainer}>
                         <TouchableOpacity
                           style={styles.circleButton}
@@ -174,7 +229,6 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                           <Text style={styles.buttonText}>+</Text>
                         </TouchableOpacity>
                       </View>
-                      {/* View Tickets Text */}
                       <TouchableOpacity>
                         <Text style={styles.viewTickets}>View Tickets</Text>
                       </TouchableOpacity>
@@ -192,50 +246,90 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
 
               {showPaymentMethod && (
                 <View>
-                  {paymentOptions.map((method, index) => (
-                    <TouchableOpacity
-                      key={method}
-                      style={[
-                        styles.paymentContainer,
-                        index === paymentOptions.length - 1 && {
-                          marginBottom: 0,
-                        },
-                      ]}
-                      onPress={() => {
-                        setFieldValue('selectedMethod', method);
-                        setShowPaymentMethod(false);
-                        setShowAccountDetailsForm(true);
-                      }}
-                    >
-                      <View style={styles.outerCircle}>
-                        <View
+                  {paymentOptions.length === 0 && (
+                    <Text style={styles.errortext}>
+                      No payment methods available for this organizer.
+                    </Text>
+                  )}
+                  {paymentOptions.map((method, index) => {
+                    const isSupported =
+                      method === 'Credit Card' ||
+                      (method === 'Easypaisa' &&
+                        bankDetails?.data?.some(
+                          (detail) => detail.bankName === 'Easypaisa'
+                        )) ||
+                      (method === 'Jazzcash' &&
+                        bankDetails?.data?.some(
+                          (detail) => detail.bankName === 'Jazzcash'
+                        )) ||
+                      (method === 'Bank Transfer' &&
+                        bankDetails?.data?.some(
+                          (detail) =>
+                            detail.bankName !== 'Easypaisa' &&
+                            detail.bankName !== 'Jazzcash'
+                        ));
+
+                    return (
+                      <TouchableOpacity
+                        key={method}
+                        style={[
+                          styles.paymentContainer,
+                          index === paymentOptions.length - 1 && {
+                            marginBottom: 0,
+                          },
+                          !isSupported && styles.disabled,
+                        ]}
+                        onPress={() => {
+                          if (!isSupported) {
+                            Alert.alert(
+                              'Unsupported',
+                              `${method} payments are not available for this organizer.`
+                            );
+                            return;
+                          }
+                          setFieldValue('selectedMethod', method);
+                          setShowPaymentMethod(false);
+                          setShowAccountDetailsForm(true);
+                        }}
+                        disabled={!isSupported}
+                      >
+                        <View style={styles.outerCircle}>
+                          <View
+                            style={[
+                              styles.innerCircle,
+                              values.selectedMethod === method &&
+                                styles.selectedInnerCircle,
+                            ]}
+                          />
+                        </View>
+                        <Text
                           style={[
-                            styles.innerCircle,
-                            values.selectedMethod === method &&
-                              styles.selectedInnerCircle,
+                            styles.paymentText,
+                            !isSupported && styles.disabledText,
                           ]}
-                        />
-                      </View>
-                      <Text style={styles.paymentText}>{method}</Text>
-                    </TouchableOpacity>
-                  ))}
+                        >
+                          {method}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               )}
 
-              {/* Payment Details Form */}
               {showAccountDetailsForm && (
                 <View>
                   {values.selectedMethod === 'Jazzcash' ||
-                  values.selectedMethod === 'EasyPaisa' ? (
+                  values.selectedMethod === 'Easypaisa' ? (
                     <>
                       <View style={styles.formContainer}>
                         <View style={styles.inputContainer}>
-                          <Text style={styles.inputLabel}>Account Name</Text>
+                          <Text style={styles.inputLabel}>Account Holder</Text>
                           <TextInput
                             style={styles.inputBox}
-                            placeholder="Enter Account Name"
+                            placeholder="Enter Account Holder"
                             placeholderTextColor="#949494"
-                            value={values.accountName}
+                            value={values.accountHolder}
+                            editable={false}
                           />
                         </View>
                         <View style={styles.inputContainer}>
@@ -245,16 +339,18 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                             placeholder="Enter Account Number"
                             placeholderTextColor="#949494"
                             value={
-                              values.selectedMethod === 'EasyPaisa'
+                              values.selectedMethod === 'Easypaisa'
                                 ? values.easyPaisaAccountNumber
                                 : values.jazzCashAccountNumber
                             }
+                            editable={false}
                           />
                         </View>
                         <View>
                           <Text style={styles.paymentInstructions}>
-                            Pay through {values.selectedMethod} in the given
-                            account number & upload screenshot for verification.
+                            Pay through {values.selectedMethod} to the given
+                            account number & upload a screenshot for
+                            verification.
                           </Text>
                         </View>
                       </View>
@@ -268,7 +364,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                         <Text style={styles.buyButtonText}>Verify</Text>
                       </TouchableOpacity>
                     </>
-                  ) : (
+                  ) : values.selectedMethod === 'Bank Transfer' ? (
                     <>
                       <View style={styles.formContainer}>
                         <View style={styles.inputContainer}>
@@ -278,15 +374,17 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                             placeholder="Enter Bank Name"
                             placeholderTextColor="#949494"
                             value={values.bankName}
+                            editable={false}
                           />
                         </View>
                         <View style={styles.inputContainer}>
-                          <Text style={styles.inputLabel}>Account Name</Text>
+                          <Text style={styles.inputLabel}>Account Holder</Text>
                           <TextInput
                             style={styles.inputBox}
-                            placeholder="Enter Account Name"
+                            placeholder="Enter Account Holder"
                             placeholderTextColor="#949494"
-                            value={values.accountName}
+                            value={values.accountHolder}
+                            editable={false}
                           />
                         </View>
                         <View style={styles.inputContainer}>
@@ -297,12 +395,13 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                             placeholderTextColor="#949494"
                             keyboardType="numeric"
                             value={values.bankAccountNumber}
+                            editable={false}
                           />
                         </View>
                         <View>
                           <Text style={styles.paymentInstructions}>
-                            lorem Ipsum, lorem Ipsum, lorem Ipsum, lorem Ipsum,
-                            lorem Ipsum, lorem Ipsum
+                            Transfer the amount to the provided bank account and
+                            upload a screenshot for verification.
                           </Text>
                         </View>
                       </View>
@@ -316,11 +415,23 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                         <Text style={styles.buyButtonText}>Verify</Text>
                       </TouchableOpacity>
                     </>
+                  ) : values.selectedMethod === 'Credit Card' ? (
+                    <View style={styles.formContainer}>
+                      <Text style={styles.errortext}>
+                        Credit Card payments are not supported for this
+                        organizer. Please select another payment method.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.centerContainer}>
+                      <Text style={styles.errortext}>
+                        This payment method is not supported for this organizer.
+                      </Text>
+                    </View>
                   )}
                 </View>
               )}
 
-              {/* Verification Form */}
               {showVerification && (
                 <View>
                   <View style={styles.formContainer}>
@@ -332,7 +443,6 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                         </Text>
                       )}
                       <Text style={styles.inputLabel}>Upload Image</Text>
-
                       <TouchableOpacity
                         style={styles.uploadBox}
                         onPress={pickImage}
@@ -348,13 +458,12 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                           color="#F0F0F0"
                         />
                       </TouchableOpacity>
-
-                      {/* {imageUri && (
+                      {imageUri && (
                         <Image
                           source={{ uri: imageUri }}
                           style={styles.previewImage}
                         />
-                      )} */}
+                      )}
                     </View>
                   </View>
                   <TouchableOpacity
@@ -590,7 +699,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist_400Regular',
     fontSize: 12,
     color: '#949494',
-    marginBottom: 20
+    marginBottom: 20,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    color: '#949494',
   },
 });
 

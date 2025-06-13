@@ -88,6 +88,20 @@ interface CategoriesResponse {
   message: string;
 }
 
+interface BankDetails {
+  id: string;
+  organizerId: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+}
+
+interface BankDetailsResponse {
+  success: boolean;
+  data: BankDetails[];
+  message: string;
+}
+
 interface HomeState {
   categories: CategoriesResponse | null;
   loading: boolean;
@@ -115,6 +129,10 @@ interface HomeState {
 
   togglingReplyLike: boolean;
   toggleReplyLikeError: string | null;
+
+  bankDetails: BankDetailsResponse | null;
+  bankDetailsLoading: boolean;
+  bankDetailsError: string | null;
 }
 
 const initialState: HomeState = {
@@ -144,6 +162,10 @@ const initialState: HomeState = {
 
   togglingReplyLike: false,
   toggleReplyLikeError: null,
+
+  bankDetails: null,
+  bankDetailsLoading: false,
+  bankDetailsError: null,
 };
 
 export const fetchEventCategories = createAsyncThunk(
@@ -254,6 +276,23 @@ export const toggleReplyLike = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to like reply'
+      );
+    }
+  }
+);
+
+export const fetchBankDetailsByOrganizerId = createAsyncThunk(
+  'home/fetchBankDetailsByOrganizerId',
+  async (
+    { id, bankName }: { id: string; bankName?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await homeApi.getBankDetailsByOrganizerId(id, bankName);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch bank details'
       );
     }
   }
@@ -532,9 +571,21 @@ const homeSlice = createSlice({
       .addCase(toggleReplyLike.rejected, (state, action) => {
         state.togglingReplyLike = false;
         state.toggleReplyLikeError = action.payload as string;
-      });
+      })
 
-      
+
+      .addCase(fetchBankDetailsByOrganizerId.pending, (state) => {
+        state.bankDetailsLoading = true;
+        state.bankDetailsError = null;
+      })
+      .addCase(fetchBankDetailsByOrganizerId.fulfilled, (state, action) => {
+        state.bankDetailsLoading = false;
+        state.bankDetails = action.payload;
+      })
+      .addCase(fetchBankDetailsByOrganizerId.rejected, (state, action) => {
+        state.bankDetailsLoading = false;
+        state.bankDetailsError = action.payload as string;
+      });
   },
 });
 
