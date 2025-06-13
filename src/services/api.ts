@@ -75,6 +75,8 @@ export const homeApi = {
   getOngoingEvents: () => api.get('/events/ongoing'),
   getAllEvents: () => api.get('/events'), // <-- Added for admin events page
   getEventById: (id: string) => api.get(`/events/${id}`), // <-- Added for event details page
+  approveEvent: (eventId: string) => api.post(`/events/update-status/${eventId}`, { status: true }),
+  declineEvent: (eventId: string) => api.post(`/events/update-status/${eventId}`, { status: false }),
 };
 
 export const imageApi = {
@@ -84,7 +86,7 @@ export const imageApi = {
     const isWebFile = typeof File !== 'undefined' && file instanceof File;
     if (isWebFile) {
       formData.append('image', file as File);
-    } else {
+  } else {
       // React Native: append as object with uri, name, type
       formData.append('image', file as { uri: string; name: string; type: string });
     }
@@ -110,6 +112,16 @@ export const userApi = {
   getUserById: (id: string) => api.get(`/user/${id}`),
   updateUserById: (id: string, data: { email: string; name: string; username: string; profilePic?: string }) =>
     api.put(`/user/${id}`, data),
+};
+
+export const notificationApi = {
+  getUserNotifications: (userId: string) => api.get(`/notification/me/${userId}`),
+  // notificationApi.markAllAsRead(userId) is already available
+  markAllAsRead: (userId: string) => api.get(`/notification/mark-as-read/${userId}`),
+};
+
+export const organizerApi = {
+  getOrganizerById: (id: string) => api.get(`/organizer/${id}`),
 };
 
 export default api;

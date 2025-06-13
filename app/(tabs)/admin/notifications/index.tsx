@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,80 +7,62 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router'; // <-- Add this import
+import { useRouter } from 'expo-router';
 import SettingsScreen from '.';
-const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
+import { notificationApi } from '@/src/services/api';
+import { jwtDecode } from 'jwt-decode';
 
-const ticketData = [
-  {
-    id: 1,
-    ticketNumber: '7675738',
-    event: 'Tixly Concert',
-    date: 'April 15, 2025',
-    location: 'Bahria Town',
-    time: '7:45 PM',
-    bookedAt: '06:23 PM',
-  },
-  {
-    id: 2,
-    ticketNumber: '9823412',
-    event: 'Rock Fest',
-    date: 'May 22, 2025',
-    location: 'Downtown Arena',
-    time: '8:30 PM',
-    bookedAt: '02:15 PM',
-  },
-  {
-    id: 3,
-    ticketNumber: '4598371',
-    event: 'Jazz Night',
-    date: 'June 10, 2025',
-    location: 'City Hall',
-    time: '6:00 PM',
-    bookedAt: '09:45 AM',
-  },
-  {
-    id: 4,
-    ticketNumber: '9823412',
-    event: 'Rock Fest',
-    date: 'May 22, 2025',
-    location: 'Downtown Arena',
-    time: '8:30 PM',
-    bookedAt: '02:15 PM',
-  },
-  {
-    id: 5,
-    ticketNumber: '4598371',
-    event: 'Jazz Night',
-    date: 'June 10, 2025',
-    location: 'City Hall',
-    time: '6:00 PM',
-    bookedAt: '09:45 AM',
-  },
-  {
-    id: 6,
-    ticketNumber: '9823412',
-    event: 'Rock Fest',
-    date: 'May 22, 2025',
-    location: 'Downtown Arena',
-    time: '8:30 PM',
-    bookedAt: '02:15 PM',
-  },
-  {
-    id: 7,
-    ticketNumber: '4598371',
-    event: 'Jazz Night',
-    date: 'June 10, 2025',
-    location: 'City Hall',
-    time: '6:00 PM',
-    bookedAt: '09:45 AM',
-  },
-];
+const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
 export default function NotificationScreen() {
   const [showSettingScreen, setshowSettingScreen] = useState(false);
-  const router = useRouter(); // <-- Add this line
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string>('');
+  const router = useRouter();
+
+  // Fetch notifications and userId
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token') || '';
+        const decoded: any = jwtDecode(token);
+        const id = decoded?.sub || '';
+        setUserId(id);
+        if (!id) return;
+        const res = await notificationApi.getUserNotifications(id);
+        setNotifications(res.data.data || []);
+        // Store notification count in localStorage
+        localStorage.setItem('notificationCount', String((res.data.data || []).length));
+      } catch (err) {
+        console.error('Failed to fetch notifications', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  // Handler for "Clear All" button
+  const handleClearAll = async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      await notificationApi.markAllAsRead(userId);
+      // Refresh notifications after marking as read
+      const res = await notificationApi.getUserNotifications(userId);
+      // Update notifications state with the response
+      localStorage.setItem('notificationCount', '0'); // Reset notification count
+      setNotifications(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to mark notifications as read', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleNotificationClick = () => {
     setshowSettingScreen(true);
@@ -89,6 +71,7 @@ export default function NotificationScreen() {
   if (showSettingScreen) {
     return <SettingsScreen />;
   }
+  const hasNotifications = notifications.length > 0;
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -105,31 +88,43 @@ export default function NotificationScreen() {
           </View>
         </View>
         <View>
-          <Text style={styles.dateText}>Monday, 22 April 2025</Text>
+          <Text style={styles.dateText}>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</Text>
         </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <TouchableOpacity style={styles.buyButton}>
-            <Text style={styles.buyButtonText}>Clear All</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View>
-          {ticketData.map((ticket) => (
-            <View key={ticket.id} style={styles.ticketContainer}>
-              <Text style={styles.ticketText}>
-                Your ticket No.{' '}
-                <Text style={styles.boldText}>{ticket.ticketNumber}</Text> for
-                the
-                {ticket.event} on{' '}
-                <Text style={styles.boldText}>{ticket.date}</Text>, at
-                <Text style={styles.boldText}> {ticket.location}</Text> at
-                <Text style={styles.boldText}> {ticket.time}</Text> has been
-                confirmed.
-              </Text>
-              <Text style={styles.timeText}>{ticket.bookedAt}</Text>
-            </View>
-          ))}
-        </View>
+        {hasNotifications && (
+          <View style={{ alignItems: 'flex-end' }}>
+            <TouchableOpacity style={styles.buyButton} onPress={handleClearAll}>
+              <Text style={styles.buyButtonText}>Clear All</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {loading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#BA0507" />
+          </View>
+        ) : hasNotifications ? (
+          <View>
+            {notifications.map((notification: any) => (
+              <TouchableOpacity
+                key={notification.id}
+                style={styles.ticketContainer}
+                onPress={() => {
+                  if (notification.event?.id) {
+                    router.push(`/event-detail/admin/${notification.event.id}`);
+                  }
+                }}
+              >
+                <Text style={styles.ticketText}>
+                  Event <Text style={styles.boldText}>{notification.event?.title}</Text> was created by organizer <Text style={styles.boldText}>{notification.user?.name}</Text> in <Text style={styles.boldText}>{notification.event?.location}</Text> at <Text style={styles.boldText}>{notification.event?.startTime ? new Date(notification.event.startTime).toLocaleString() : ''}</Text>.
+                </Text>
+                <Text style={styles.timeText}>{notification.createdAt ? new Date(notification.createdAt).toLocaleTimeString() : ''}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Text style={{ color: '#949494', fontSize: 16 }}>No notifications</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -199,7 +194,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#949494',
     marginHorizontal: 19,
   },
-
   ticketText: {
     fontFamily: 'Urbanist_400Regular',
     flex: 1,
@@ -207,7 +201,6 @@ const styles = StyleSheet.create({
     lineHeight: 16 * 1.37,
     color: '#949494',
   },
-
   boldText: {
     fontFamily: 'Urbanist_600SemiBold',
     fontWeight: 'bold',
@@ -215,11 +208,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#E1E1E1',
   },
-
   timeText: {
     fontFamily: 'Urbanist_400Regular',
     fontSize: 12,
     color: '#949494',
     marginLeft: 10,
+  },
+  loaderContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
 });

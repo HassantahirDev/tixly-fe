@@ -60,6 +60,9 @@ export default function AdminHomeScreen() {
   const { featuredEvents, featuredEventsLoading, featuredEventsError } =
     useSelector((state: RootState) => state.home);
 
+  // Notification count from localStorage
+  const [notificationCount, setNotificationCount] = useState<number>(0);
+
   useEffect(() => {
     dispatch(fetchEventCategories());
     // dispatch(fetchFeaturedEvents());
@@ -78,6 +81,9 @@ export default function AdminHomeScreen() {
         setOngoingEvents([]);
       }
     });
+    // On mount, get notificationCount from localStorage
+    const storedCount = localStorage.getItem('notificationCount');
+    setNotificationCount(storedCount ? parseInt(storedCount, 10) : 0);
   }, [dispatch]);
 
   // Handler for edit modal open
@@ -192,14 +198,16 @@ export default function AdminHomeScreen() {
         <View style={styles.header}>
           <Text style={styles.logo}>TiXLY</Text>
           <View style={styles.headerRight}>
-            <View style={styles.notificationBadge}>
-              <TouchableOpacity onPress={() => router.push('/admin/notifications')}>
+            <TouchableOpacity onPress={() => router.push('/admin/notifications')}>
+              <View style={styles.notificationBadge}>
                 <Ionicons name="notifications-outline" size={24} color="white" />
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>3</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
+                {notificationCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{notificationCount}</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/admin/profile')}>
               <Image
                 source={{ uri: dummyProfilePic }}

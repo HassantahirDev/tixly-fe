@@ -1,6 +1,6 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,14 @@ const Privacy = require('../../../../src/assets/images/Privacy.svg');
 export default function SettingsScreen() {
   const [isdeleteAccount, setIsdeleteAccount] = useState(false);
   const [isLogout, setIsLogout] = useState(false);
+  const [notificationCount, setNotificationCount] = useState<number>(0);
   const router = useRouter();
+
+  useEffect(() => {
+    // On mount, get notificationCount from localStorage
+    const storedCount = localStorage.getItem('notificationCount');
+    setNotificationCount(storedCount ? parseInt(storedCount, 10) : 0);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -28,12 +35,17 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <Text style={styles.logo}>TiXLY</Text>
         <View style={styles.headerRight}>
-          <View style={styles.notificationBadge}>
+          <TouchableOpacity
+            style={styles.notificationBadge}
+            onPress={() => router.push('/admin/notifications')}
+          >
             <Ionicons name="notifications-outline" size={24} color="white" />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
-          </View>
+            {notificationCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{notificationCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
           <Image
             source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }}
             style={styles.profilePic}

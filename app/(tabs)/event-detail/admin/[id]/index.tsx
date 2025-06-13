@@ -235,8 +235,9 @@ export default function AdminEventDetailScreen() {
               style={styles.organizedByDetailsBtn}
               onPress={() =>
                 router.push({
-                  pathname: '/event-detail/admin/[id]/organizer',
-                  params: { id },
+                  pathname: `/event-detail/admin/${id}/organizer/${event.organizer?.id}`,
+
+            
                 })
               }
             >

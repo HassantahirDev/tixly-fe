@@ -6,6 +6,7 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +17,9 @@ export default function AdminEventsScreen() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notificationCount, setNotificationCount] = useState<number>(0);
+  const [actionLoading, setActionLoading] = useState<{ [eventId: string]: 'approve' | 'decline' | null }>({});
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const router = useRouter();
   const params = useLocalSearchParams();
   const mode = params.mode;
@@ -51,16 +55,90 @@ export default function AdminEventsScreen() {
     fetchEvents
       .then((res: any) => {
         let data = res.data?.data || [];
-        // Sort: not-approved events first (approvedByAdmin: false)
+        // Sort: pending status first, then the rest
         data = data.sort((a: any, b: any) => {
-          if (a.approvedByAdmin === b.approvedByAdmin) return 0;
-          return a.approvedByAdmin ? 1 : -1;
+          if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+          if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
+          return 0;
         });
         setEvents(data);
       })
       .catch(() => setEvents([]))
       .finally(() => setLoading(false));
   }, [mode, params.events]);
+
+  useEffect(() => {
+    // On mount, get notificationCount from localStorage
+    const storedCount = localStorage.getItem('notificationCount');
+    setNotificationCount(storedCount ? parseInt(storedCount, 10) : 0);
+  }, []);
+
+  const reloadEvents = () => {
+    setLoading(true);
+    let fetchEvents;
+    if (params.events) {
+      setEvents(JSON.parse(params.events as string));
+      setLoading(false);
+      return;
+    }
+    if (mode === 'upcoming') {
+      fetchEvents = homeApi.getUpcomingEvents();
+    } else if (mode === 'ongoing') {
+      fetchEvents = homeApi.getOngoingEvents();
+    } else {
+      fetchEvents = homeApi.getAllEvents ? homeApi.getAllEvents() : homeApi.getUpcomingEvents();
+    }
+    fetchEvents
+      .then((res: any) => {
+        let data = res.data?.data || [];
+        // Sort: pending status first, then the rest
+        data = data.sort((a: any, b: any) => {
+          if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+          if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
+          return 0;
+        });
+        setEvents(data);
+      })
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false));
+  };
+
+  const handleApprove = async (eventId: string) => {
+    setActionLoading((prev) => ({ ...prev, [eventId]: 'approve' }));
+    try {
+      const res = await homeApi.approveEvent(eventId);
+      const updatedEvent = res.data?.data;
+      setEvents((prev) => prev.map((ev) =>
+        ev.id === eventId
+          ? { ...ev, status: updatedEvent.status, approvedByAdmin: updatedEvent.approvedByAdmin }
+          : ev
+      ));
+      setActionMessage('Event approved');
+    } catch (e) {
+      setActionMessage('Failed to approve event');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [eventId]: null }));
+      setTimeout(() => setActionMessage(null), 2000);
+    }
+  };
+  const handleDecline = async (eventId: string) => {
+    setActionLoading((prev) => ({ ...prev, [eventId]: 'decline' }));
+    try {
+      const res = await homeApi.declineEvent(eventId);
+      const updatedEvent = res.data?.data;
+      setEvents((prev) => prev.map((ev) =>
+        ev.id === eventId
+          ? { ...ev, status: updatedEvent.status, approvedByAdmin: updatedEvent.approvedByAdmin }
+          : ev
+      ));
+      setActionMessage('Event declined');
+    } catch (e) {
+      setActionMessage('Failed to decline event');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [eventId]: null }));
+      setTimeout(() => setActionMessage(null), 2000);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -70,17 +148,13 @@ export default function AdminEventsScreen() {
           <Text style={styles.logo}>TiXLY</Text>
           <View style={styles.headerRight}>
             <View style={styles.notificationBadge}>
-              <TouchableOpacity
-                onPress={() => router.push('/admin/notifications')}
-              >
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color="white"
-                />
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>3</Text>
-                </View>
+              <TouchableOpacity onPress={() => router.push('/admin/notifications')}>
+                <Ionicons name="notifications-outline" size={24} color="white" />
+                {notificationCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{notificationCount}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
             <TouchableOpacity onPress={() => router.push('/admin/profile')}>
@@ -196,18 +270,36 @@ export default function AdminEventsScreen() {
                       >
                         <Text style={styles.detailsBtnText}>Details</Text>
                       </TouchableOpacity>
-                      {!hideApproval && event.approvedByAdmin === false ? (
-                        <>
-                          <TouchableOpacity style={styles.declineBtn}>
-                            <Text style={styles.declineBtnText}>Decline</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.approveBtn}>
-                            <Text style={styles.approveBtnText}>Approve</Text>
-                          </TouchableOpacity>
-                        </>
-                      ) : (
-                        <Text style={{ color: '#4CAF50', fontWeight: 'bold', marginTop: 10 }}>Approved</Text>
-                      )}
+                      {(() => {
+                        // Use event.status directly to determine display
+                        if (event.status === 'REJECTED') {
+                          return <Text style={{ color: '#FF4B55', fontWeight: 'bold', marginTop: 10 }}>Declined</Text>;
+                        }
+                        if (event.status === 'APPROVED') {
+                          return <Text style={{ color: '#4CAF50', fontWeight: 'bold', marginTop: 10 }}>Approved</Text>;
+                        }
+                        if (event.status === 'PENDING') {
+                          return (
+                            <>
+                              <TouchableOpacity style={styles.declineBtn} onPress={() => handleDecline(event.id)} disabled={!!actionLoading[event.id]}>
+                                {actionLoading[event.id] === 'decline' ? (
+                                  <ActivityIndicator color="#FF4B55" />
+                                ) : (
+                                  <Text style={styles.declineBtnText}>Decline</Text>
+                                )}
+                              </TouchableOpacity>
+                              <TouchableOpacity style={styles.approveBtn} onPress={() => handleApprove(event.id)} disabled={!!actionLoading[event.id]}>
+                                {actionLoading[event.id] === 'approve' ? (
+                                  <ActivityIndicator color="white" />
+                                ) : (
+                                  <Text style={styles.approveBtnText}>Approve</Text>
+                                )}
+                              </TouchableOpacity>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
                     </View>
                   </>
                 )}
@@ -216,6 +308,14 @@ export default function AdminEventsScreen() {
           )}
         </View>
       </ScrollView>
+      {/* Toast message */}
+      {actionMessage && (
+        <View style={{ position: 'absolute', bottom: 100, left: 0, right: 0, alignItems: 'center', zIndex: 100 }}>
+          <View style={{ backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, borderRadius: 8 }}>
+            <Text style={{ color: 'white' }}>{actionMessage}</Text>
+          </View>
+        </View>
+      )}
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity

@@ -56,10 +56,17 @@ export default function AdminTicketsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notificationCount, setNotificationCount] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
     fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    // On mount, get notificationCount from localStorage
+    const storedCount = localStorage.getItem('notificationCount');
+    setNotificationCount(storedCount ? parseInt(storedCount, 10) : 0);
   }, []);
 
   const fetchEvents = async () => {
@@ -120,12 +127,12 @@ export default function AdminTicketsScreen() {
           <Text style={styles.logo}>TiXLY</Text>
           <View style={styles.headerRight}>
             <View style={styles.notificationBadge}>
-              <TouchableOpacity onPress={() => router.push('/admin/notifications')}>
-                <Ionicons name="notifications-outline" size={24} color="white" />
+              <Ionicons name="notifications-outline" size={24} color="white" />
+              {notificationCount > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>3</Text>
+                  <Text style={styles.badgeText}>{notificationCount}</Text>
                 </View>
-              </TouchableOpacity>
+              )}
             </View>
             <TouchableOpacity onPress={() => router.push('/admin/profile')}>
               <Image
@@ -377,21 +384,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  notificationBadge: {
-    position: 'relative',
-    marginRight: 12,
+   notificationBadge: {
+    marginRight: 15,
   },
   badge: {
     position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: '#BA0507',
-    borderRadius: 8,
-    width: 18,
-    height: 18,
-    alignItems: 'center',
+    right: -5,
+    top: -5,
+    backgroundColor: '#FF4B55',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
-    zIndex: 2,
+    alignItems: 'center',
   },
   badgeText: {
     color: 'white',
