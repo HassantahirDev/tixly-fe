@@ -138,5 +138,17 @@ export const homeApi = {
 };
 
 
+export const eventsPayment = {
+  uploadSingleImage: (formData: FormData) =>
+    api.post('/image/upload/single', formData),
+
+  createTicketsPayment: (data: {
+    screenshotUrl: string;
+    quantity: number;
+    eventId: string;
+    qrCodeUrl?: string;
+  }) => api.post('/ticketsPayment', data),
+};
+
 
 export default api; 

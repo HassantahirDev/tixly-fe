@@ -7,16 +7,21 @@ import {
   TextInput,
   Alert,
   Image,
+  Platform,
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import Foundation from '@expo/vector-icons/Foundation';
 import { useSelector } from 'react-redux';
+import { useAppDispatch } from '../../src/store/hooks';
 import { RootState } from '@/src/store/store';
 import { useLocalSearchParams } from 'expo-router';
 import { Formik } from 'formik';
 import * as ImagePicker from 'expo-image-picker';
-import { fetchBankDetailsByOrganizerId } from '@/src/store/slices/homeSlice'; 
-import { useAppDispatch } from '../../src/store/hooks';
+import { fetchBankDetailsByOrganizerId } from '@/src/store/slices/homeSlice';
+import {
+  uploadSingleImage,
+  createTicketsPayment,
+} from '@/src/store/slices/eventPaymentSlice';
 const thankYouImage = require('../../src/assets/images/thankYou.png');
 
 interface PaymentProps {
@@ -28,16 +33,33 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
   const { id } = useLocalSearchParams();
   const { selectedEvent, bankDetails, bankDetailsLoading, bankDetailsError } =
     useSelector((state: RootState) => state.home);
+  const {
+    uploadedImageUrl,
+    uploadImageLoading,
+    uploadImageError,
+    createPaymentLoading,
+    createPaymentSuccess,
+    createPaymentError,
+  } = useSelector((state: RootState) => state.eventPayment);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [showAccountDetailsForm, setShowAccountDetailsForm] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'success' | 'failed' | null>(
-    null
-  );
+  const [uploadStatus, setUploadStatus] = useState<
+    'uploading' | 'success' | 'failed' | null
+  >(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
-
-  // Fetch bank details when component mounts
   useEffect(() => {
+    (async () => {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Denied',
+          'Please allow access to your photo library.'
+        );
+      }
+    })();
+
     if (selectedEvent?.organizerId) {
       dispatch(
         fetchBankDetailsByOrganizerId({ id: selectedEvent.organizerId })
@@ -45,13 +67,28 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
     }
   }, [dispatch, selectedEvent?.organizerId]);
 
-  // Determine initial form values based on bank details
+  useEffect(() => {
+    if (showVerification) {
+      setUploadStatus(null);
+    }
+  }, [showVerification]);
+
+  useEffect(() => {
+    if (createPaymentSuccess) {
+      console.log(
+        'createPaymentSuccess triggered, setting uploadStatus to success'
+      );
+      setUploadStatus('success');
+      setShowVerification(false);
+    }
+  }, [createPaymentSuccess]);
+
   const getInitialValues = () => {
     let easyPaisaAccountNumber = '';
     let jazzCashAccountNumber = '';
     let bankName = '';
     let bankAccountNumber = '';
-    let accountHolder = 'John Doe'; // Default fallback
+    let accountHolder = 'John Doe';
 
     if (bankDetails?.data) {
       const easyPaisa = bankDetails.data.find(
@@ -88,37 +125,92 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
   };
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
+      base64: Platform.OS === 'web',
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      const asset = result.assets[0];
+      console.log('Picked image:', {
+        uri: asset.uri,
+        width: asset.width,
+        height: asset.height,
+        fileSize: asset.fileSize,
+        fileName: asset.fileName,
+      });
+      setImageUri(asset.uri);
     }
   };
 
-  const handleUpload = async () => {
+  const dataUrlToBlob = async (dataUrl: string) => {
+    const response = await fetch(dataUrl);
+    return await response.blob();
+  };
+
+  const handleUpload = async (values: { ticketCount: number }) => {
     if (!imageUri) {
       Alert.alert('Error', 'Please select an image before uploading.');
       return;
     }
 
+    if (!selectedEvent?.id) {
+      Alert.alert('Error', 'Event ID is missing.');
+      return;
+    }
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setUploadStatus('success'); // Simulate success for now
-      if (uploadStatus === 'success') {
-        setShowVerification(false);
+      setUploadStatus('uploading');
+      console.log('Starting image upload...');
+
+      const formData = new FormData();
+
+      if (Platform.OS === 'web') {
+        const blob = await dataUrlToBlob(imageUri);
+        (formData as any).append('image', blob, 'image.jpg');
+      } else {
+        const fileName = imageUri.split('/').pop() || 'image.jpg';
+        const fileType = fileName.endsWith('.png') ? 'image/png' : 'image/jpeg';
+        formData.append('image', {
+          uri: imageUri,
+          name: fileName,
+          type: fileType,
+        } as any);
       }
-      Alert.alert('Success', 'Image uploaded successfully.');
+
+      console.log('FormData prepared:', { uri: imageUri });
+
+      const uploadResult = await dispatch(uploadSingleImage(formData)).unwrap();
+      console.log('Image upload result:', uploadResult);
+
+      if (!uploadResult) {
+        throw new Error('Image upload failed: No URL returned');
+      }
+
+      console.log('Creating ticket payment...');
+      const paymentResult = await dispatch(
+        createTicketsPayment({
+          screenshotUrl: uploadResult,
+          quantity: values.ticketCount,
+          eventId: selectedEvent.id,
+        })
+      ).unwrap();
+      console.log('Ticket payment result:', paymentResult);
+
+      console.log('Upload and payment completed successfully');
     } catch (error) {
       setUploadStatus('failed');
-      Alert.alert('Upload Failed', 'Please try again.');
+      const errorMessage =
+        typeof error === 'string'
+          ? error
+          : uploadImageError || createPaymentError || 'Please try again.';
+      console.error('Upload error:', error, 'Message:', errorMessage);
+      Alert.alert('Upload Failed', errorMessage);
     }
   };
 
-  // Define payment options
   const paymentOptions = [
     'Easypaisa',
     'Jazzcash',
@@ -134,358 +226,359 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
         setShowAccountDetailsForm(false);
         setShowVerification(true);
       }}
-      enableReinitialize // Reinitialize form when initialValues change
+      enableReinitialize
     >
-      {({ handleSubmit, values, setFieldValue }) => {
-        return (
-          <View style={styles.overlay}>
-            <View style={styles.container}>
-              <View style={styles.header}>
-                {(uploadStatus === 'failed' ||
-                  showVerification ||
-                  showPaymentMethod ||
-                  showAccountDetailsForm) && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      setUploadStatus(null);
-                      if (showVerification) {
-                        setShowVerification(false);
-                        setShowAccountDetailsForm(true);
-                      } else if (showAccountDetailsForm) {
-                        setShowAccountDetailsForm(false);
-                        setShowPaymentMethod(true);
-                      } else {
-                        setShowPaymentMethod(false);
-                      }
-                    }}
-                  >
-                    <AntDesign name="arrowleft" size={24} color="#F0F0F0" />
-                  </TouchableOpacity>
-                )}
-                <Text style={styles.text}>
-                  {uploadStatus === 'success'
-                    ? 'Successfully Done'
-                    : uploadStatus === 'failed'
-                    ? 'Try Again'
-                    : showVerification
-                    ? 'Verification'
-                    : showAccountDetailsForm
-                    ? values.selectedMethod === 'Bank Transfer'
-                      ? 'Bank Account Details'
-                      : values.selectedMethod === 'Credit Card'
-                      ? 'Credit Card Details'
-                      : `${values.selectedMethod} Account Details`
-                    : showPaymentMethod
-                    ? 'Select your Payment Method'
-                    : 'Select No of Tickets'}
-                </Text>
-                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                  <AntDesign name="close" size={24} color="#F0F0F0" />
+      {({ handleSubmit, values, setFieldValue }) => (
+        <View style={styles.overlay}>
+          <View style={styles.container}>
+            <View style={styles.header}>
+              {(uploadStatus === 'failed' ||
+                showVerification ||
+                showPaymentMethod ||
+                showAccountDetailsForm) && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setUploadStatus(null);
+                    if (showVerification) {
+                      setShowVerification(false);
+                      setShowAccountDetailsForm(true);
+                    } else if (showAccountDetailsForm) {
+                      setShowAccountDetailsForm(false);
+                      setShowPaymentMethod(true);
+                    } else {
+                      setShowPaymentMethod(false);
+                    }
+                  }}
+                >
+                  <AntDesign name="arrowleft" size={24} color="#F0F0F0" />
                 </TouchableOpacity>
+              )}
+              <Text style={styles.text}>
+                {uploadStatus === 'success'
+                  ? 'Successfully Done'
+                  : uploadStatus === 'failed'
+                  ? 'Try Again'
+                  : showVerification
+                  ? 'Verification'
+                  : showAccountDetailsForm
+                  ? values.selectedMethod === 'Bank Transfer'
+                    ? 'Bank Account Details'
+                    : values.selectedMethod === 'Credit Card'
+                    ? 'Credit Card Details'
+                    : `${values.selectedMethod} Account Details`
+                  : showPaymentMethod
+                  ? 'Select your Payment Method'
+                  : 'Select No of Tickets'}
+              </Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <AntDesign name="close" size={24} color="#F0F0F0" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.separator} />
+
+            {bankDetailsLoading && (
+              <View style={styles.centerContainer}>
+                <Text style={styles.text}>Loading bank details...</Text>
               </View>
-              <View style={styles.separator} />
+            )}
 
-              {bankDetailsLoading && (
-                <View style={styles.centerContainer}>
-                  <Text style={styles.text}>Loading bank details...</Text>
-                </View>
-              )}
+            {bankDetailsError && (
+              <View style={styles.centerContainer}>
+                <Text style={styles.errortext}>{bankDetailsError}</Text>
+              </View>
+            )}
 
-              {bankDetailsError && (
-                <View style={styles.centerContainer}>
-                  <Text style={styles.errortext}>{bankDetailsError}</Text>
-                </View>
-              )}
-
-              {!bankDetailsLoading &&
-                !bankDetailsError &&
-                uploadStatus !== 'success' &&
-                !showVerification &&
-                !showPaymentMethod &&
-                !showAccountDetailsForm && (
-                  <>
-                    <View style={styles.header}>
-                      <View style={styles.counterContainer}>
-                        <TouchableOpacity
-                          style={styles.circleButton}
-                          onPress={() =>
-                            setFieldValue(
-                              'ticketCount',
-                              Math.max(1, values.ticketCount - 1)
-                            )
-                          }
-                        >
-                          <Text style={styles.buttonText}>-</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.countText}>
-                          {String(values.ticketCount).padStart(2, '0')}
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.circleButton}
-                          onPress={() =>
-                            setFieldValue('ticketCount', values.ticketCount + 1)
-                          }
-                        >
-                          <Text style={styles.buttonText}>+</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <TouchableOpacity>
-                        <Text style={styles.viewTickets}>View Tickets</Text>
+            {!bankDetailsLoading &&
+              !bankDetailsError &&
+              uploadStatus !== 'success' &&
+              !showVerification &&
+              !showPaymentMethod &&
+              !showAccountDetailsForm && (
+                <>
+                  <View style={styles.header}>
+                    <View style={styles.counterContainer}>
+                      <TouchableOpacity
+                        style={styles.circleButton}
+                        onPress={() =>
+                          setFieldValue(
+                            'ticketCount',
+                            Math.max(1, values.ticketCount - 1)
+                          )
+                        }
+                      >
+                        <Text style={styles.buttonText}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.countText}>
+                        {String(values.ticketCount).padStart(2, '0')}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.circleButton}
+                        onPress={() =>
+                          setFieldValue('ticketCount', values.ticketCount + 1)
+                        }
+                      >
+                        <Text style={styles.buttonText}>+</Text>
                       </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      style={styles.buyButton}
-                      onPress={() => setShowPaymentMethod(true)}
-                    >
-                      <Text style={styles.buyButtonText}>
-                        Buy it - PKR {selectedEvent?.price}
-                      </Text>
+                    <TouchableOpacity>
+                      <Text style={styles.viewTickets}>View Tickets</Text>
                     </TouchableOpacity>
-                  </>
-                )}
-
-              {showPaymentMethod && (
-                <View>
-                  {paymentOptions.length === 0 && (
-                    <Text style={styles.errortext}>
-                      No payment methods available for this organizer.
-                    </Text>
-                  )}
-                  {paymentOptions.map((method, index) => {
-                    const isSupported =
-                      method === 'Credit Card' ||
-                      (method === 'Easypaisa' &&
-                        bankDetails?.data?.some(
-                          (detail) => detail.bankName === 'Easypaisa'
-                        )) ||
-                      (method === 'Jazzcash' &&
-                        bankDetails?.data?.some(
-                          (detail) => detail.bankName === 'Jazzcash'
-                        )) ||
-                      (method === 'Bank Transfer' &&
-                        bankDetails?.data?.some(
-                          (detail) =>
-                            detail.bankName !== 'Easypaisa' &&
-                            detail.bankName !== 'Jazzcash'
-                        ));
-
-                    return (
-                      <TouchableOpacity
-                        key={method}
-                        style={[
-                          styles.paymentContainer,
-                          index === paymentOptions.length - 1 && {
-                            marginBottom: 0,
-                          },
-                          !isSupported && styles.disabled,
-                        ]}
-                        onPress={() => {
-                          if (!isSupported) {
-                            Alert.alert(
-                              'Unsupported',
-                              `${method} payments are not available for this organizer.`
-                            );
-                            return;
-                          }
-                          setFieldValue('selectedMethod', method);
-                          setShowPaymentMethod(false);
-                          setShowAccountDetailsForm(true);
-                        }}
-                        disabled={!isSupported}
-                      >
-                        <View style={styles.outerCircle}>
-                          <View
-                            style={[
-                              styles.innerCircle,
-                              values.selectedMethod === method &&
-                                styles.selectedInnerCircle,
-                            ]}
-                          />
-                        </View>
-                        <Text
-                          style={[
-                            styles.paymentText,
-                            !isSupported && styles.disabledText,
-                          ]}
-                        >
-                          {method}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              )}
-
-              {showAccountDetailsForm && (
-                <View>
-                  {values.selectedMethod === 'Jazzcash' ||
-                  values.selectedMethod === 'Easypaisa' ? (
-                    <>
-                      <View style={styles.formContainer}>
-                        <View style={styles.inputContainer}>
-                          <Text style={styles.inputLabel}>Account Holder</Text>
-                          <TextInput
-                            style={styles.inputBox}
-                            placeholder="Enter Account Holder"
-                            placeholderTextColor="#949494"
-                            value={values.accountHolder}
-                            editable={false}
-                          />
-                        </View>
-                        <View style={styles.inputContainer}>
-                          <Text style={styles.inputLabel}>Account Number</Text>
-                          <TextInput
-                            style={styles.inputBox}
-                            placeholder="Enter Account Number"
-                            placeholderTextColor="#949494"
-                            value={
-                              values.selectedMethod === 'Easypaisa'
-                                ? values.easyPaisaAccountNumber
-                                : values.jazzCashAccountNumber
-                            }
-                            editable={false}
-                          />
-                        </View>
-                        <View>
-                          <Text style={styles.paymentInstructions}>
-                            Pay through {values.selectedMethod} to the given
-                            account number & upload a screenshot for
-                            verification.
-                          </Text>
-                        </View>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.buyButton}
-                        onPress={() => {
-                          setShowAccountDetailsForm(false);
-                          setShowVerification(true);
-                        }}
-                      >
-                        <Text style={styles.buyButtonText}>Verify</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : values.selectedMethod === 'Bank Transfer' ? (
-                    <>
-                      <View style={styles.formContainer}>
-                        <View style={styles.inputContainer}>
-                          <Text style={styles.inputLabel}>Bank Name</Text>
-                          <TextInput
-                            style={styles.inputBox}
-                            placeholder="Enter Bank Name"
-                            placeholderTextColor="#949494"
-                            value={values.bankName}
-                            editable={false}
-                          />
-                        </View>
-                        <View style={styles.inputContainer}>
-                          <Text style={styles.inputLabel}>Account Holder</Text>
-                          <TextInput
-                            style={styles.inputBox}
-                            placeholder="Enter Account Holder"
-                            placeholderTextColor="#949494"
-                            value={values.accountHolder}
-                            editable={false}
-                          />
-                        </View>
-                        <View style={styles.inputContainer}>
-                          <Text style={styles.inputLabel}>Account Number</Text>
-                          <TextInput
-                            style={styles.inputBox}
-                            placeholder="Enter Account Number"
-                            placeholderTextColor="#949494"
-                            keyboardType="numeric"
-                            value={values.bankAccountNumber}
-                            editable={false}
-                          />
-                        </View>
-                        <View>
-                          <Text style={styles.paymentInstructions}>
-                            Transfer the amount to the provided bank account and
-                            upload a screenshot for verification.
-                          </Text>
-                        </View>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.buyButton}
-                        onPress={() => {
-                          setShowAccountDetailsForm(false);
-                          setShowVerification(true);
-                        }}
-                      >
-                        <Text style={styles.buyButtonText}>Verify</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : values.selectedMethod === 'Credit Card' ? (
-                    <View style={styles.formContainer}>
-                      <Text style={styles.errortext}>
-                        Credit Card payments are not supported for this
-                        organizer. Please select another payment method.
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={styles.centerContainer}>
-                      <Text style={styles.errortext}>
-                        This payment method is not supported for this organizer.
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-
-              {showVerification && (
-                <View>
-                  <View style={styles.formContainer}>
-                    <View>
-                      {uploadStatus === 'failed' && (
-                        <Text style={styles.errortext}>
-                          An error occurred, the verification is still pending,
-                          try again or try another method for payment. Thanks!
-                        </Text>
-                      )}
-                      <Text style={styles.inputLabel}>Upload Image</Text>
-                      <TouchableOpacity
-                        style={styles.uploadBox}
-                        onPress={pickImage}
-                      >
-                        <Text style={styles.uploadText}>
-                          {imageUri
-                            ? 'Image Selected'
-                            : 'Select screenshot to upload'}
-                        </Text>
-                        <Foundation
-                          name="paperclip"
-                          size={20}
-                          color="#F0F0F0"
-                        />
-                      </TouchableOpacity>
-                      {imageUri && (
-                        <Image
-                          source={{ uri: imageUri }}
-                          style={styles.previewImage}
-                        />
-                      )}
-                    </View>
                   </View>
                   <TouchableOpacity
                     style={styles.buyButton}
-                    onPress={handleUpload}
+                    onPress={() => setShowPaymentMethod(true)}
                   >
                     <Text style={styles.buyButtonText}>
-                      {uploadStatus === 'success' ? 'Uploaded' : 'Upload'}
+                      Buy it - PKR {selectedEvent?.price}
                     </Text>
                   </TouchableOpacity>
-                </View>
+                </>
               )}
 
-              {uploadStatus === 'success' && (
-                <View style={styles.centerContainer}>
-                  <Image source={thankYouImage} style={styles.successImage} />
+            {showPaymentMethod && (
+              <View>
+                {paymentOptions.length === 0 && (
+                  <Text style={styles.errortext}>
+                    No payment methods available for this organizer.
+                  </Text>
+                )}
+                {paymentOptions.map((method, index) => {
+                  const isSupported =
+                    method === 'Credit Card' ||
+                    (method === 'Easypaisa' &&
+                      bankDetails?.data?.some(
+                        (detail) => detail.bankName === 'Easypaisa'
+                      )) ||
+                    (method === 'Jazzcash' &&
+                      bankDetails?.data?.some(
+                        (detail) => detail.bankName === 'Jazzcash'
+                      )) ||
+                    (method === 'Bank Transfer' &&
+                      bankDetails?.data?.some(
+                        (detail) =>
+                          detail.bankName !== 'Easypaisa' &&
+                          detail.bankName !== 'Jazzcash'
+                      ));
+
+                  return (
+                    <TouchableOpacity
+                      key={method}
+                      style={[
+                        styles.paymentContainer,
+                        index === paymentOptions.length - 1 && {
+                          marginBottom: 0,
+                        },
+                        !isSupported && styles.disabled,
+                      ]}
+                      onPress={() => {
+                        if (!isSupported) {
+                          Alert.alert(
+                            'Unsupported',
+                            `${method} payments are not available for this organizer.`
+                          );
+                          return;
+                        }
+                        setFieldValue('selectedMethod', method);
+                        setShowPaymentMethod(false);
+                        setShowAccountDetailsForm(true);
+                      }}
+                      disabled={!isSupported}
+                    >
+                      <View style={styles.outerCircle}>
+                        <View
+                          style={[
+                            styles.innerCircle,
+                            values.selectedMethod === method &&
+                              styles.selectedInnerCircle,
+                          ]}
+                        />
+                      </View>
+                      <Text
+                        style={[
+                          styles.paymentText,
+                          !isSupported && styles.disabledText,
+                        ]}
+                      >
+                        {method}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+
+            {showAccountDetailsForm && (
+              <View>
+                {values.selectedMethod === 'Jazzcash' ||
+                values.selectedMethod === 'Easypaisa' ? (
+                  <>
+                    <View style={styles.formContainer}>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Account Holder</Text>
+                        <TextInput
+                          style={styles.inputBox}
+                          placeholder="Enter Account Holder"
+                          placeholderTextColor="#949494"
+                          value={values.accountHolder}
+                          editable={false}
+                        />
+                      </View>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Account Number</Text>
+                        <TextInput
+                          style={styles.inputBox}
+                          placeholder="Enter Account Number"
+                          placeholderTextColor="#949494"
+                          value={
+                            values.selectedMethod === 'Easypaisa'
+                              ? values.easyPaisaAccountNumber
+                              : values.jazzCashAccountNumber
+                          }
+                          editable={false}
+                        />
+                      </View>
+                      <View>
+                        <Text style={styles.paymentInstructions}>
+                          Pay through {values.selectedMethod} to the given
+                          account number & upload a screenshot for verification.
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.buyButton}
+                      onPress={() => {
+                        setShowAccountDetailsForm(false);
+                        setShowVerification(true);
+                      }}
+                    >
+                      <Text style={styles.buyButtonText}>Verify</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : values.selectedMethod === 'Bank Transfer' ? (
+                  <>
+                    <View style={styles.formContainer}>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Bank Name</Text>
+                        <TextInput
+                          style={styles.inputBox}
+                          placeholder="Enter Bank Name"
+                          placeholderTextColor="#949494"
+                          value={values.bankName}
+                          editable={false}
+                        />
+                      </View>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Account Holder</Text>
+                        <TextInput
+                          style={styles.inputBox}
+                          placeholder="Enter Account Holder"
+                          placeholderTextColor="#949494"
+                          value={values.accountHolder}
+                          editable={false}
+                        />
+                      </View>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Account Number</Text>
+                        <TextInput
+                          style={styles.inputBox}
+                          placeholder="Enter Account Number"
+                          placeholderTextColor="#949494"
+                          keyboardType="numeric"
+                          value={values.bankAccountNumber}
+                          editable={false}
+                        />
+                      </View>
+                      <View>
+                        <Text style={styles.paymentInstructions}>
+                          Transfer the amount to the provided bank account and
+                          upload a screenshot for verification.
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.buyButton}
+                      onPress={() => {
+                        setShowAccountDetailsForm(false);
+                        setShowVerification(true);
+                      }}
+                    >
+                      <Text style={styles.buyButtonText}>Verify</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : values.selectedMethod === 'Credit Card' ? (
+                  <View style={styles.formContainer}>
+                    <Text style={styles.errortext}>
+                      Credit Card payments are not supported for this organizer.
+                      Please select another payment method.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.centerContainer}>
+                    <Text style={styles.errortext}>
+                      This payment method is not supported for this organizer.
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {showVerification && (
+              <View>
+                <View style={styles.formContainer}>
+                  <View>
+                    {(uploadImageError || createPaymentError) && (
+                      <Text style={styles.errortext}>
+                        {uploadImageError || createPaymentError}
+                      </Text>
+                    )}
+                    <Text style={styles.inputLabel}>Upload Image</Text>
+                    <TouchableOpacity
+                      style={styles.uploadBox}
+                      onPress={pickImage}
+                      disabled={uploadImageLoading || createPaymentLoading}
+                    >
+                      <Text style={styles.uploadText}>
+                        {imageUri
+                          ? 'Image Selected'
+                          : 'Select screenshot to upload'}
+                      </Text>
+                      <Foundation name="paperclip" size={20} color="#F0F0F0" />
+                    </TouchableOpacity>
+                    {imageUri && (
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={styles.previewImage}
+                      />
+                    )}
+                    {(uploadImageLoading || createPaymentLoading) && (
+                      <Text style={styles.text}>Processing...</Text>
+                    )}
+                  </View>
                 </View>
-              )}
-            </View>
+                <TouchableOpacity
+                  style={[
+                    styles.buyButton,
+                    (uploadImageLoading || createPaymentLoading) &&
+                      styles.disabled,
+                  ]}
+                  onPress={() => handleUpload(values)}
+                  disabled={uploadImageLoading || createPaymentLoading}
+                >
+                  <Text style={styles.buyButtonText}>
+                    {uploadStatus === 'success' ? 'Uploaded' : 'Upload'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {uploadStatus === 'success' && (
+              <View style={styles.centerContainer}>
+                <Image source={thankYouImage} style={styles.successImage} />
+              </View>
+            )}
           </View>
-        );
-      }}
+        </View>
+      )}
     </Formik>
   );
 };
