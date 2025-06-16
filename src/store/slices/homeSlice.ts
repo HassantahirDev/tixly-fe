@@ -133,6 +133,14 @@ interface HomeState {
   bankDetails: BankDetailsResponse | null;
   bankDetailsLoading: boolean;
   bankDetailsError: string | null;
+
+  searchResults: Event[] | null;
+  searchLoading: boolean;
+  searchError: string | null;
+
+  eventsByCategory: Event[] | null;
+  eventsByCategoryLoading: boolean;
+  eventsByCategoryError: string | null;
 }
 
 const initialState: HomeState = {
@@ -166,6 +174,14 @@ const initialState: HomeState = {
   bankDetails: null,
   bankDetailsLoading: false,
   bankDetailsError: null,
+  
+  searchResults: null,
+  searchLoading: false,
+  searchError: null,
+
+  eventsByCategory: null,
+  eventsByCategoryLoading: false,
+  eventsByCategoryError: null,
 };
 
 export const fetchEventCategories = createAsyncThunk(
@@ -297,6 +313,37 @@ export const fetchBankDetailsByOrganizerId = createAsyncThunk(
     }
   }
 );
+
+
+export const searchEvents = createAsyncThunk(
+  'home/searchEvents',
+  async (query: string, { rejectWithValue }) => {
+    try {
+      const response = await homeApi.searchEvents(query);
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Search failed'
+      );
+    }
+  }
+);
+
+export const getEventsByCategoryId = createAsyncThunk(
+  'home/getEventsByCategoryId',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await homeApi.getEventsByCategoryId(id);
+      return response.data.data; 
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch category events'
+      );
+    }
+  }
+);
+
+
 
 
 const homeSlice = createSlice({
@@ -585,7 +632,34 @@ const homeSlice = createSlice({
       .addCase(fetchBankDetailsByOrganizerId.rejected, (state, action) => {
         state.bankDetailsLoading = false;
         state.bankDetailsError = action.payload as string;
+      })
+
+      .addCase(searchEvents.pending, (state) => {
+        state.searchLoading = true;
+        state.searchError = null;
+      })
+      .addCase(searchEvents.fulfilled, (state, action) => {
+        state.searchLoading = false;
+        state.searchResults = action.payload;
+      })
+      .addCase(searchEvents.rejected, (state, action) => {
+        state.searchLoading = false;
+        state.searchError = action.payload as string;
+      })
+
+      .addCase(getEventsByCategoryId.pending, (state) => {
+        state.eventsByCategoryLoading = true;
+        state.eventsByCategoryError = null;
+      })
+      .addCase(getEventsByCategoryId.fulfilled, (state, action) => {
+        state.eventsByCategoryLoading = false;
+        state.eventsByCategory = action.payload;
+      })
+      .addCase(getEventsByCategoryId.rejected, (state, action) => {
+        state.eventsByCategoryLoading = false;
+        state.eventsByCategoryError = action.payload as string;
       });
+      
   },
 });
 

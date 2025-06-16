@@ -18,6 +18,8 @@ interface AuthState {
   error: string | null;
   userRole: 'USER' | 'ORGANIZER' | null;
   isVerified: boolean;
+  deletingUser: boolean;
+  deleteUserError: string | null;
 }
 
 const initialState: AuthState = {
@@ -28,6 +30,9 @@ const initialState: AuthState = {
   error: null,
   userRole: null,
   isVerified: false,
+  deletingUser: false,
+deleteUserError: null,
+
 };
 
 // Async Thunks
@@ -133,6 +138,21 @@ export const fetchUserById = createAsyncThunk(
     }
   }
 );
+
+export const deleteUserById = createAsyncThunk(
+  'home/deleteUserById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await authApi.deleteUserById(id);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to delete user'
+      );
+    }
+  }
+);
+
 
 
 const authSlice = createSlice({
@@ -250,7 +270,20 @@ const authSlice = createSlice({
     builder.addCase(fetchUserById.rejected, (state, action) => {
       state.isLoading = false;
       state.error = action.payload as string;
-    });
+    })
+
+    builder.addCase(deleteUserById.pending, (state) => {
+      state.deletingUser = true;
+      state.deleteUserError = null;
+    })
+    builder.addCase(deleteUserById.fulfilled, (state) => {
+      state.deletingUser = false;
+    })
+    builder.addCase(deleteUserById.rejected, (state, action) => {
+      state.deletingUser = false;
+      state.deleteUserError = action.payload as string;
+    })
+    
     
   },
 });

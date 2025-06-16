@@ -14,7 +14,7 @@ import Foundation from '@expo/vector-icons/Foundation';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '../../src/store/hooks';
 import { RootState } from '@/src/store/store';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Formik } from 'formik';
 import * as ImagePicker from 'expo-image-picker';
 import { fetchBankDetailsByOrganizerId } from '@/src/store/slices/homeSlice';
@@ -22,7 +22,9 @@ import {
   uploadSingleImage,
   createTicketsPayment,
 } from '@/src/store/slices/eventPaymentSlice';
+import TicketDetailCard from '@/src/components/TicketDetailCard';
 const thankYouImage = require('../../src/assets/images/thankYou.png');
+const dummyProfilePic = 'https://randomuser.me/api/portraits/men/1.jpg';
 
 interface PaymentProps {
   onClose: () => void;
@@ -48,6 +50,9 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
     'uploading' | 'success' | 'failed' | null
   >(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [showTicket, setShowTicket] = useState(false);
+  const router = useRouter();
+
   useEffect(() => {
     (async () => {
       const { status } =
@@ -112,7 +117,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
         otherBank?.accountHolder ||
         'John Doe';
     }
-     
+
     return {
       ticketCount: 2,
       selectedMethod: '',
@@ -211,6 +216,10 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
     }
   };
 
+  const handleProfileClick = () => {
+    router.push('/(tabs)/settings/profile');
+  };
+
   const paymentOptions = [
     'Easypaisa',
     'Jazzcash',
@@ -229,52 +238,64 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
       enableReinitialize
     >
       {({ handleSubmit, values, setFieldValue }) => (
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, { height: showTicket ? '100%' : 'auto', backgroundColor: showTicket ? "black" : "#1E1E1E" }]}>
           <View style={styles.container}>
             <View style={styles.header}>
               {(uploadStatus === 'failed' ||
                 showVerification ||
                 showPaymentMethod ||
                 showAccountDetailsForm) && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setUploadStatus(null);
-                    if (showVerification) {
-                      setShowVerification(false);
-                      setShowAccountDetailsForm(true);
-                    } else if (showAccountDetailsForm) {
-                      setShowAccountDetailsForm(false);
-                      setShowPaymentMethod(true);
-                    } else {
-                      setShowPaymentMethod(false);
-                    }
-                  }}
-                >
-                  <AntDesign name="arrowleft" size={24} color="#F0F0F0" />
-                </TouchableOpacity>
-              )}
+                  <TouchableOpacity
+                    onPress={() => {
+                      setUploadStatus(null);
+                      if (showVerification) {
+                        setShowVerification(false);
+                        setShowAccountDetailsForm(true);
+                      } else if (showAccountDetailsForm) {
+                        setShowAccountDetailsForm(false);
+                        setShowPaymentMethod(true);
+                      } else if (showTicket) {
+                        setShowTicket(false);
+                        setShowPaymentMethod(false);
+                      } else {
+                        setShowPaymentMethod(false);
+                      }
+                    }}
+                  >
+                    <AntDesign name="arrowleft" size={24} color="#F0F0F0" />
+                  </TouchableOpacity>
+                )}
               <Text style={styles.text}>
                 {uploadStatus === 'success'
                   ? 'Successfully Done'
                   : uploadStatus === 'failed'
-                  ? 'Try Again'
-                  : showVerification
-                  ? 'Verification'
-                  : showAccountDetailsForm
-                  ? values.selectedMethod === 'Bank Transfer'
-                    ? 'Bank Account Details'
-                    : values.selectedMethod === 'Credit Card'
-                    ? 'Credit Card Details'
-                    : `${values.selectedMethod} Account Details`
-                  : showPaymentMethod
-                  ? 'Select your Payment Method'
-                  : 'Select No of Tickets'}
+                    ? 'Try Again'
+                    : showVerification
+                      ? 'Verification'
+                      : showAccountDetailsForm
+                        ? values.selectedMethod === 'Bank Transfer'
+                          ? 'Bank Account Details'
+                          : values.selectedMethod === 'Credit Card'
+                            ? 'Credit Card Details'
+                            : `${values.selectedMethod} Account Details`
+                        : showPaymentMethod && !showTicket
+                          ? 'Select your Payment Method' : showTicket
+                            ? 'Ticket'
+                            : 'Select No of Tickets'}
               </Text>
-              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <AntDesign name="close" size={24} color="#F0F0F0" />
-              </TouchableOpacity>
+              {
+                !showTicket ?
+                  <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                    <AntDesign name="close" size={24} color="#F0F0F0" />
+                  </TouchableOpacity> :
+                  <TouchableOpacity onPress={handleProfileClick}>
+                    <Image source={{ uri: dummyProfilePic }} style={styles.profilePic} />
+                  </TouchableOpacity>
+              }
+
             </View>
-            <View style={styles.separator} />
+
+            {!showTicket && <View style={styles.separator} />}
 
             {bankDetailsLoading && (
               <View style={styles.centerContainer}>
@@ -293,7 +314,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
               uploadStatus !== 'success' &&
               !showVerification &&
               !showPaymentMethod &&
-              !showAccountDetailsForm && (
+              !showAccountDetailsForm && !showTicket && (
                 <>
                   <View style={styles.header}>
                     <View style={styles.counterContainer}>
@@ -320,9 +341,12 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                         <Text style={styles.buttonText}>+</Text>
                       </TouchableOpacity>
                     </View>
-                    {/* <TouchableOpacity>
+                    <TouchableOpacity onPress={() => {
+                      setShowTicket(true)
+                      setShowPaymentMethod(true)
+                    }}>
                       <Text style={styles.viewTickets}>View Tickets</Text>
-                    </TouchableOpacity> */}
+                    </TouchableOpacity>
                   </View>
                   <TouchableOpacity
                     style={styles.buyButton}
@@ -335,7 +359,34 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                 </>
               )}
 
-            {showPaymentMethod && (
+
+            {showTicket && (
+              <TicketDetailCard
+                title="Tixly concert - The Immersive Experience"
+                date="Apr 09, 2025"
+                time="01:00 PM"
+                venue="Faisal Town, Lahore"
+                hall="Gold 3"
+                seat="234 - R14 - H98"
+                orderNo="345838"
+                price="500"
+                onClickGotIt={() => {
+                  setShowTicket(false);
+                  setUploadStatus(null);
+                  if (showVerification) {
+                    setShowVerification(false);
+                    setShowAccountDetailsForm(true);
+                  } else if (showAccountDetailsForm) {
+                    setShowAccountDetailsForm(false);
+                    setShowPaymentMethod(true);
+                  } else {
+                    setShowPaymentMethod(false);
+                  }
+                }}
+              />
+            )}
+
+            {showPaymentMethod && !showTicket && (
               <View>
                 {paymentOptions.length === 0 && (
                   <Text style={styles.errortext}>
@@ -389,7 +440,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                           style={[
                             styles.innerCircle,
                             values.selectedMethod === method &&
-                              styles.selectedInnerCircle,
+                            styles.selectedInnerCircle,
                           ]}
                         />
                       </View>
@@ -407,10 +458,10 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
               </View>
             )}
 
-            {showAccountDetailsForm && (
+            {showAccountDetailsForm && !showTicket && (
               <View>
                 {values.selectedMethod === 'Jazzcash' ||
-                values.selectedMethod === 'Easypaisa' ? (
+                  values.selectedMethod === 'Easypaisa' ? (
                   <>
                     <View style={styles.formContainer}>
                       <View style={styles.inputContainer}>
@@ -522,7 +573,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
               </View>
             )}
 
-            {showVerification && (
+            {showVerification && !showTicket && (
               <View>
                 <View style={styles.formContainer}>
                   <View>
@@ -559,7 +610,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                   style={[
                     styles.buyButton,
                     (uploadImageLoading || createPaymentLoading) &&
-                      styles.disabled,
+                    styles.disabled,
                   ]}
                   onPress={() => handleUpload(values)}
                   disabled={uploadImageLoading || createPaymentLoading}
@@ -571,7 +622,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
               </View>
             )}
 
-            {uploadStatus === 'success' && (
+            {uploadStatus === 'success' && !showTicket && (
               <View style={styles.centerContainer}>
                 <Image source={thankYouImage} style={styles.successImage} />
               </View>
@@ -589,8 +640,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 'auto',
-    backgroundColor: '#1E1E1E',
     paddingBottom: 21,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
@@ -598,6 +647,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: '100%',
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -799,6 +849,11 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: '#949494',
+  },
+  profilePic: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
 });
 

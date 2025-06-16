@@ -125,6 +125,7 @@ export const authApi = {
     data: { email?: string; name?: string; username?: string }
   ) => api.put(`/user/${id}`, data),
   getUserById: (id: string) => api.get(`/user/${id}`),
+  deleteUserById: (id: string) => api.delete(`/user/${id}`),
 };
 
 export const homeApi = {
@@ -165,6 +166,14 @@ export const homeApi = {
     api.get(`/bankDetails/organizer/${id}`, {
       params: bankName ? { bankName } : {},
     }),
+
+  searchEvents: (query: string) =>
+  api.get('/events/search', {
+    params: { query },
+  }),
+
+  getEventsByCategoryId: (id: string) => api.get(`/eventCategory/${id}`),
+
 };
 
 

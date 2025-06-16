@@ -575,6 +575,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#1E1E1E',
     marginTop: 20,
+    marginHorizontal:20,
     borderRadius: 15,
     overflow: 'hidden',
   },

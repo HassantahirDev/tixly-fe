@@ -12,9 +12,10 @@ import {
 import Header from '@/src/components/Header';
 import RoleNavigation from '@/src/components/Navigation';
 import { useAppDispatch } from '../../../src/store/hooks';
-import { logout } from '../../../src/store/slices/authSlice';
+import { deleteUserById, logout } from '../../../src/store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { getCurrentUserId } from '@/src/services/api';
 
 const Terms = require('../../../src/assets/images/Terms.svg');
 const Voucher = require('../../../src/assets/images/Voucher.svg');
@@ -35,6 +36,20 @@ export default function SettingsScreen() {
       console.error('Logout error:', error);
     }
   };
+  const userId = getCurrentUserId()
+
+  const handleDeleteAccount = async () => {
+    if (!userId) return;
+
+    try {
+      await dispatch(deleteUserById(userId)).unwrap();
+      await AsyncStorage.clear();
+      router.push('/onboarding');
+    } catch (error) {
+      console.error('Delete account error:', error);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -130,9 +145,10 @@ export default function SettingsScreen() {
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.updateButton}>
+            <TouchableOpacity style={styles.updateButton} onPress={handleDeleteAccount}>
               <Text style={styles.updateButtonText}>Confirm</Text>
             </TouchableOpacity>
+
           </View>
         </View>
       )}
