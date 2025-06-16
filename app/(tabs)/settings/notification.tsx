@@ -109,7 +109,7 @@ export default function NotificationScreen() {
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <TouchableOpacity style={styles.buyButton}>
-            <Text style={styles.buyButtonText}>Logout</Text>
+            <Text style={styles.buyButtonText}>Clear all</Text>
           </TouchableOpacity>
         </View>
 

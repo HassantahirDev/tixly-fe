@@ -1,12 +1,41 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { eventsPayment } from '@/src/services/api';
 
+export interface TicketPayment {
+  id: string;
+  amount: number;
+  screenshotUrl: string;
+  qrCodeUrl: string;
+  quantity: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  eventId: string;
+  Event: {
+    id: string;
+    title: string;
+    description: string;
+    attachment: string;
+    date: string;
+    location: string;
+    price: number;
+  };
+  User: {
+    id: string;
+    email: string;
+    username: string;
+    profilePic: string;
+    name: string;
+  };
+}
+
 export const uploadSingleImage = createAsyncThunk(
   'home/uploadSingleImage',
   async (formData: FormData, { rejectWithValue }) => {
     try {
       const response = await eventsPayment.uploadSingleImage(formData);
-      return response.data; 
+      return response.data;
     } catch (error: unknown) {
       if (
         typeof error === 'object' &&
@@ -21,6 +50,19 @@ export const uploadSingleImage = createAsyncThunk(
   }
 );
 
+export const fetchUserTicketsPayments = createAsyncThunk(
+  'tickets/fetchUserTicketsPayments',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const response = await eventsPayment.getUserTicketsPayments(userId);
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch tickets'
+      );
+    }
+  }
+);
 
 export const createTicketsPayment = createAsyncThunk(
   'home/createTicketsPayment',
@@ -50,18 +92,41 @@ export const createTicketsPayment = createAsyncThunk(
   }
 );
 
+interface EventPaymentState {
+  uploadedImageUrl: string;
+  uploadImageLoading: boolean;
+  uploadImageError: string | null;
+  createPaymentLoading: boolean;
+  createPaymentSuccess: boolean;
+  createPaymentError: string | null;
+  userTickets: TicketPayment[];
+  userTicketsLoading: boolean;
+  userTicketsError: string | null;
+}
+
+const initialState: EventPaymentState = {
+  uploadedImageUrl: '',
+  uploadImageLoading: false,
+  uploadImageError: null,
+  createPaymentLoading: false,
+  createPaymentSuccess: false,
+  createPaymentError: null,
+  userTickets: [],
+  userTicketsLoading: false,
+  userTicketsError: null,
+};
+
 const eventPayment = createSlice({
   name: 'home',
-  initialState: {
-    uploadedImageUrl: '',
-    uploadImageLoading: false,
-    uploadImageError: null as string | null,
-
-    createPaymentLoading: false,
-    createPaymentSuccess: false,
-    createPaymentError: null as string | null,
+  initialState,
+  reducers: {
+    resetErrors: (state) => {
+      state.uploadImageError = null;
+      state.createPaymentError = null;
+      state.createPaymentSuccess = false;
+      state.userTicketsError = null;
+    },
   },
-  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(uploadSingleImage.pending, (state) => {
@@ -75,10 +140,7 @@ const eventPayment = createSlice({
       .addCase(uploadSingleImage.rejected, (state, action) => {
         state.uploadImageLoading = false;
         state.uploadImageError = action.payload as string;
-      });
-
-    // Add new ticket payment cases
-    builder
+      })
       .addCase(createTicketsPayment.pending, (state) => {
         state.createPaymentLoading = true;
         state.createPaymentSuccess = false;
@@ -91,9 +153,21 @@ const eventPayment = createSlice({
       .addCase(createTicketsPayment.rejected, (state, action) => {
         state.createPaymentLoading = false;
         state.createPaymentError = action.payload as string;
+      })
+      .addCase(fetchUserTicketsPayments.pending, (state) => {
+        state.userTicketsLoading = true;
+        state.userTicketsError = null;
+      })
+      .addCase(fetchUserTicketsPayments.fulfilled, (state, action) => {
+        state.userTicketsLoading = false;
+        state.userTickets = action.payload as TicketPayment[];
+      })
+      .addCase(fetchUserTicketsPayments.rejected, (state, action) => {
+        state.userTicketsLoading = false;
+        state.userTicketsError = action.payload as string;
       });
   },
 });
 
-
-export default eventPayment.reducer; 
+export const { resetErrors } = eventPayment.actions;
+export default eventPayment.reducer;

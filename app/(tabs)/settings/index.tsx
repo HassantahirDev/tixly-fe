@@ -11,14 +11,30 @@ import {
 } from 'react-native';
 import Header from '@/src/components/Header';
 import RoleNavigation from '@/src/components/Navigation';
+import { useAppDispatch } from '../../../src/store/hooks';
+import { logout } from '../../../src/store/slices/authSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 
 const Terms = require('../../../src/assets/images/Terms.svg');
 const Voucher = require('../../../src/assets/images/Voucher.svg');
 const Privacy = require('../../../src/assets/images/Privacy.svg');
 
 export default function SettingsScreen() {
+  const dispatch = useAppDispatch();
   const [isdeleteAccount, setIsdeleteAccount] = useState(false);
   const [isLogout, setIsLogout] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      dispatch(logout());
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('userRole');
+      router.push('/onboarding');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -150,7 +166,10 @@ export default function SettingsScreen() {
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.updateButton}>
+            <TouchableOpacity
+              style={styles.updateButton}
+              onPress={handleLogout}
+            >
               <Text style={styles.updateButtonText}>Confirm</Text>
             </TouchableOpacity>
           </View>

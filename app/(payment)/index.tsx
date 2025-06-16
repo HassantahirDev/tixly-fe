@@ -112,7 +112,7 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
         otherBank?.accountHolder ||
         'John Doe';
     }
-
+     
     return {
       ticketCount: 2,
       selectedMethod: '',
@@ -320,9 +320,9 @@ const Payment: React.FC<PaymentProps> = ({ onClose }) => {
                         <Text style={styles.buttonText}>+</Text>
                       </TouchableOpacity>
                     </View>
-                    <TouchableOpacity>
+                    {/* <TouchableOpacity>
                       <Text style={styles.viewTickets}>View Tickets</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </View>
                   <TouchableOpacity
                     style={styles.buyButton}

@@ -11,6 +11,36 @@ export interface SignUpData {
   role: 'USER' | 'ORGANIZER';
 }
 
+export interface TicketPayment {
+  id: string;
+  amount: number;
+  screenshotUrl: string;
+  qrCodeUrl: string;
+  quantity: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  eventId: string;
+  Event: {
+    id: string;
+    title: string;
+    description: string;
+    attachment: string;
+    date: string;
+    location: string;
+    price: number;
+  };
+  User: {
+    id: string;
+    email: string;
+    username: string;
+    profilePic: string;
+    name: string;
+  };
+}
+
+
 export   function hasUserId(like: unknown): like is { userId: string } {
     return (
       typeof like === 'object' &&
@@ -148,6 +178,9 @@ export const eventsPayment = {
     eventId: string;
     qrCodeUrl?: string;
   }) => api.post('/ticketsPayment', data),
+
+  getUserTicketsPayments: (userId: string) =>
+    api.get(`/ticketsPayment/me/${userId}`),
 };
 
 
